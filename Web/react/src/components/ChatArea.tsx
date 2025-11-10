@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 const ChatArea = () => {
 	const [query, setQuery] = useState('');
@@ -25,6 +25,23 @@ const ChatArea = () => {
 		e.preventDefault();
 		if (query.trim()) {
 			// Handle chat query submission (e.g., send to chatbot)
+			const data = {
+				query: query
+			}
+			fetch("http://localhost:5000/query", 
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify(data)
+				}
+			)
+			.then(
+				(res) => {console.log(res)}, 
+				(rej) => {console.log(rej)}
+			)
+			.catch()
 			console.log('Query submitted:', query);
 			setQuery('');
 		}

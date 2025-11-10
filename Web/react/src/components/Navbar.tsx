@@ -1,6 +1,4 @@
-import React from 'react';
-
-const PROJECT_NAME: string = "NAME"
+const PROJECT_NAME: string = "Forensix"
 
 const Navbar = () => {
 	return (
