@@ -1,2 +1,2 @@
-Text Summarization
-Anomaly Detection
+Text Summarization  ->  INCOMPLETE
+Anomaly Detection   ->  INCOMPLETE

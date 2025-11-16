@@ -1,2 +1,2 @@
-Images Face Detection ->
-Videos Face Detection -> 
+Images Face Detection -> FACES: COMPLETED CLUSTERING: INCOMPLETE
+Videos Face Detection -> INCOMPLETE
