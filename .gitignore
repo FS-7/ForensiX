@@ -212,3 +212,8 @@ AI/ASR/*.exe
 ForensiX.pptx
 Web/react/node_modules
 
+/deps
+Instructions.txt
+Perfect.docx
+requirements.txt
+AI/FD/js
