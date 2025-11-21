@@ -17,11 +17,53 @@ def preprocessing():
 
 @internal.route('/classify')
 def classify():
+    
     return 
 
-@internal.route('/llm_safety')
+@internal.route('/llm_safety', methods=["POST"])
 def llm_safety():
-    return 
+    data = request.data
+    query = json.loads(data)
+    return make_response(text_gen(query), 200)
+
+def text_gen(query):
+    device = "cpu"
+    model_path = "ibm-granite/granite-4.0-h-1b"
+
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    model = AutoModelForCausalLM.from_pretrained(model_path)
+    model.eval()
+        
+    embedding_manager=EmbeddingManager()
+    vectorstore = VectorStore('txt_messages', '../Data/vector_store')
+    rag_retriever=RAGRetriever(vectorstore,embedding_manager)
+    
+    sms_documents = parser.parseSMS_CSV(loc="../../AI/Extraction/Data/")
+    
+    chunks = split_documents(sms_documents)
+    texts = [doc.page_content for doc in chunks]
+    embeddings = embedding_manager.generate_embeddings(texts)
+    vectorstore.add_documents(sms_documents, embeddings)
+
+    results = rag_retriever.retrieve(query=query)
+    context="\n\n".join([doc['content'] for doc in results]) if results else ""
+    if not context:
+        output = ["No relevant context found to answer the question."]
+    else:
+        chat = [
+            { 
+            "role": "user", 
+            "content": f"""Use the following context to answer the question concisely. Context: {context}, Question: {query}."""
+            }
+        ]
+
+        chat = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True)
+
+        input_tokens = tokenizer(chat, return_tensors="pt").to(device)
+        output = model.generate(**input_tokens, max_new_tokens=50)
+        output = tokenizer.batch_decode(output)
+
+    return output[0]
 
 def Normalize():
     return

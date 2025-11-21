@@ -1,24 +1,32 @@
-import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
-import ChatArea from './components/ChatArea';
-import A from './a.jsx';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
+import Cases from "./pages/Cases";
+import CaseDetail from "./pages/CaseDetail";
+import NewCase from "./pages/NewCase";
+import NotFound from "./pages/NotFound";
 
-function App() {
-	return (
-		<A />
-		/*
-		<div className="flex h-screen w-screen bg-gray-100 dark:bg-gray-900 w-full">
+const queryClient = new QueryClient();
 
-			<div className="flex flex-col w-full">
-				<Navbar />
-				<main className="flex flex-row p-6 w-full h-full">
-					<Sidebar />
-					<ChatArea />
-				</main>
-			</div>
-		</div>
-		*/
-	);
-}
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/cases" element={<Cases />} />
+          <Route path="/cases/:id" element={<CaseDetail />} />
+          <Route path="/new-case" element={<NewCase />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;

@@ -1,15 +1,9 @@
 from forensix.shared import *
-from datetime import datetime
-from langchain_core.documents import Document
-from sqlite3 import connect
 import re
-import pandas as pd
     
 parser = Blueprint('parser', __name__, url_prefix='/parser')
 
-loc = os.getenv('DATA')
-
-def parseCSV():
+def parseSMS_CSV(loc):
     try:
         sms = pd.read_csv(loc+"sms.csv", header=None)
         sms = sms.loc[:, [2, 4, 5, 9, 12, 18]]
@@ -40,12 +34,14 @@ def parseCSV():
                 )
             )
         
-        print(sms_documents)
+        return sms_documents
         
     except Exception as e:
         print(f"Error: {e}")
     except:
         print("Unknown Error")
+        
+def parseLogsCSV(loc):
         
     try:
         call_logs = pd.read_csv(loc+"call_logs.csv", header=None)
@@ -74,13 +70,14 @@ def parseCSV():
                 )
             )
             
-        print(call_logs_documents)
+        return call_logs_documents
         
     except Exception as e:
         print(f"Error: {e}")
     except:
         print("Unknown Error")
         
+def parseContactsCSV(loc):
     try:
         contacts = pd.read_csv(loc+"contacts.csv", header=None)
         contacts = contacts.iloc[:, [16, 1, 2, 8]]
@@ -106,19 +103,15 @@ def parseCSV():
                 )
             )
         
-        print(contacts_documents)
+        return contacts_documents
         
     except Exception as e:
         print(f"Error: {e}")
     except:
         print("Unknown Error")
-        
-def parseSQL():
-    loc = "./Data/"
-    sms = connect(loc + "sms.db")
-    contacts = connect(loc + "contacts2.db")
-    call_logs = connect(loc + "call_log.db")
 
+def parseSMS_SQL(loc):
+    sms = sqlite3.connect(loc + "sms.db")
     sms_cursor = sms.cursor()
     sms_documents = []
     for c in sms_cursor.execute("SELECT * FROM SMS"):
@@ -134,7 +127,10 @@ def parseSQL():
                 }
             )
         )
+    return sms_documents
         
+def parseLogsSQL(loc):    
+    call_logs = sqlite3.connect(loc + "call_log.db")
     call_logs_cursor = call_logs.cursor()
     call_logs_documents = []
     for c in call_logs_cursor.execute("SELECT * FROM CALLS"):
@@ -151,10 +147,5 @@ def parseSQL():
                 }
             )
         )
-        
-    for d in sms_documents:
-        print(d)
-        
-    for d in call_logs_documents:
-        print(d)
+    return call_logs_documents
         
