@@ -1,5 +1,5 @@
 from forensix.shared import *
-from forensix.threat import analyze, generate, generate_query, run_query, convert_to_nlp
+from forensix.threat import analyze, generate_query, run_query, convert_to_nlp
 
 internal = Blueprint('internal', __name__, url_prefix='/internal')
 
@@ -7,18 +7,26 @@ internal = Blueprint('internal', __name__, url_prefix='/internal')
 def internal_index():
     return make_response("Internal", 200)
 
-@internal.route('/generateReport/<int: id>', methods=["GET"])
+@internal.route('/generateReport/<int:id>', methods=["GET"])
 def generate_report(id):
-    analyze(id)
-    return make_response("", 200)
+    response = analyze(id)
+    print(response)
+    return make_response(response, 200)
 
 @internal.route('/nlp', methods=["POST"])
 def nlp_query():
     data = request.form
     query = data['query']
     
+    print(query)
+    
     sql_query = generate_query(query)
+    print("SQL:", sql_query)
+    
     results = run_query(sql_query)
+    print("Results: ", results)
+    
     output = convert_to_nlp(results)
+    print("Output: ", output)
     return make_response(output, 200)
 

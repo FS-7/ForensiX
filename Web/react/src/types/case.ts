@@ -15,6 +15,6 @@ export interface CrimeCase {
   dateOccurred: string;
   assignedOfficer?: string;
   witnesses?: number;
-  evidence?: string[];
+  evidences?: string[];
   notes?: string;
 }

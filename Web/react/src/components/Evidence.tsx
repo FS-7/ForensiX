@@ -18,8 +18,8 @@ export const Evidence = ({ case_ }: CaseCardProps) => {
                     <div className="flex items-center gap-2 text-muted-foreground mb-1">
                         <span className="text-sm font-medium">Evidence</span>
                     </div>
-                    {case_.evidence.map((e, i) => (
-                        <p className="text-foreground capitalize" key={i}>{e}</p>
+                    {case_.evidences.map((e, i) => (
+                        <p className="text-foreground capitalize" key={i}>{e[1]}</p>
                     ))}
                 </div>
             </div>

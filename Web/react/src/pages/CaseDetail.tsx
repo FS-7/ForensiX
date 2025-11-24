@@ -113,7 +113,7 @@ const CaseDetail = () => {
 							</h2>
 							<p className="text-foreground leading-relaxed">{case_.description}</p>
 						</Card>
-						<CaseReport />
+						<CaseReport case_={case_}/>
 
 						{case_.notes && (
 							<Card className="p-6">

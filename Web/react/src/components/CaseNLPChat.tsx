@@ -28,56 +28,17 @@ export const CaseNLPChat = ({ caseData }: CaseNLPChatProps) => {
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = { role: "user", content: input };
-    fetch(BACKEND + 'internal/llm_safety', {
+    fetch(BACKEND + 'internal/nlp', {
       method: 'POST',
-      body: JSON.stringify(userMessage.content)
+      body: new URLSearchParams({
+        query: input,
+      })
     })
     .then((res) => console.log(res))
     .catch((res) => console.log(res))
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
-
-    `
-    try {
-      const { data, error } = await supabase.functions.invoke("case-nlp", {
-        body: {
-          message: input,
-          caseData: {
-            caseNumber: caseData.caseNumber,
-            title: caseData.title,
-            type: caseData.type,
-            status: caseData.status,
-            severity: caseData.severity,
-            location: caseData.location,
-            dateOccurred: caseData.dateOccurred,
-            dateReported: caseData.dateReported,
-            description: caseData.description,
-            assignedOfficer: caseData.assignedOfficer,
-            witnesses: caseData.witnesses,
-            evidence: caseData.evidence,
-            notes: caseData.notes,
-          },
-        },
-      });
-
-      if (error) throw error;
-
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: data.response,
-      };
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error("Error sending message:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to get response",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }`
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

@@ -1,5 +1,7 @@
 from forensix.shared import *
 from datetime import datetime
+from pathlib import Path
+
 import pandas as pd 
 import re, sqlite3
 
@@ -30,8 +32,8 @@ def parseLogsCSV(loc):
         
     try:
         call_logs = pd.read_csv(loc+"call_logs.csv", header=None)
-        call_logs = call_logs.iloc[: , [9, 32, 24, 1, 26, 10]]
-        call_logs.columns = ["Number", "Owner", "Time", "Duration", "Type", "CountryISO"]
+        call_logs = call_logs.iloc[: , [9, 24, 1, 26]]
+        call_logs.columns = ["Number", "Time", "Duration", "Type"]
 
         for i in call_logs:
             call_logs[i] = call_logs[i].transform(lambda x: x.split("=")[1])
@@ -80,11 +82,24 @@ def parseLogsSQL(loc):
     call_logs = sqlite3.connect(loc + "call_log.db")
     call_logs_cursor = call_logs.cursor()
 
-    call_log_documents = pd.DataFrame(columns=[["Number", "Owner", "Time", "Duration", "Type", "CountryISO",]])
+    call_log_documents = pd.DataFrame(columns=[["Number", "Time", "Duration", "Type"]])
     for i, c in enumerate(call_logs_cursor.execute("SELECT * FROM CALLS").fetchall()):
-        call_log_documents.loc[i] = [ c[1], c[12], datetime.fromtimestamp(int(c[5])//1000).strftime("%d-%m-%Y %H:%M:%S"), c[6], "INCOMING" if c[8]==1 else "OUTGOING" if c[8] == 2 else "MISSED" if c[8] == 3 else "REJECTED", c[19] ]
+        call_log_documents.loc[i] = [ c[1], datetime.fromtimestamp(int(c[5])//1000).strftime("%d-%m-%Y %H:%M:%S"), c[6], "INCOMING" if c[8]==1 else "OUTGOING" if c[8] == 2 else "MISSED" if c[8] == 3 else "REJECTED"]
     
     return call_log_documents
     
-        
-        
+def scan_files(root="."):
+    entries = []
+    for p in Path(root).rglob("*"):
+        if p.is_file():
+            stat = p.stat()
+            entries.append({
+                "path": str(p),
+                "name": p.name,
+                "parent": str(p.parent),
+                "size": stat.st_size,
+                "mtime_readable": datetime.fromtimestamp(int(stat.st_mtime)//1000).strftime("%d-%m-%Y %H:%M:%S"),
+                "ext": p.suffix.lower(),
+            })
+    return entries
+                

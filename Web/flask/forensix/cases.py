@@ -21,14 +21,14 @@ def get_cases():
             keys.append(i[0])
         
         for i in set(keys):
-            for j in cursor.execute("SELECT * FROM EVIDENCES;", values).fetchall():    
-                if i == j[0]:
-                    evidences[i].append(j[1])
+            for j in cursor.execute("SELECT rowid, case_id, title FROM EVIDENCES;", values).fetchall():    
+                if i == j[1]:
+                    evidences[i].append((j[0], j[2]))
         
         for id, i in enumerate(cursor.execute(sql, values).fetchall()):
             results.append(
                 {
-                    "id": str(id), "caseNumber": i[0], "title": i[1], "description": i[2], "type": i[3], "status": i[4], "severity": i[5], "location": i[6], "dateOccured": i[7], "dateReported": i[8], "assignedOfficer": i[9], "witnesses": i[10], "evidence": evidences[i[0]], "notes": i[11]
+                    "id": str(id), "caseNumber": i[0], "title": i[1], "description": i[2], "type": i[3], "status": i[4], "severity": i[5], "location": i[6], "dateOccured": i[7], "dateReported": i[8], "assignedOfficer": i[9], "witnesses": i[10], "evidences": evidences[i[0]], "notes": i[11]
                 }
             )
         return make_response(results, 200)
@@ -119,23 +119,26 @@ def post_evidence():
     case_number = data['caseNumber']
     title = data['title']
     filename = ""
+    if not os.path.isdir(UPLOAD_FOLDER):
+        os.mkdir(UPLOAD_FOLDER)
     
     try:
         for i in request.files:
             file = request.files[i]
-            filename = secure_filename(f"{case_number}_{file.filename}")
+            filename = secure_filename(f"{case_number}_{title}_{file.filename}")
             file.save(os.path.join(UPLOAD_FOLDER, filename))
+    except Exception as e:
+        print(e)
     except:
-        pass
+        print("Error")
     
-    sql = "INSERT INTO EVIDENCES(CASE_ID, TITLE, REFERENCE) VALUES (?, ?, ?);"
-    values = [case_number, title, filename]
-    
-    try:        
+    try:
+        sql = "INSERT INTO EVIDENCES(CASE_ID, TITLE, REFERENCE) VALUES (?, ?, ?);"
+        values = [case_number, title, filename]
         conn = get_conn()
         cursor = conn.cursor()
         cursor.execute(sql, values)
-        last_id = cursor.lastrowid
+        last_id = str(cursor.lastrowid)
         cursor.close()
         conn.commit()
         conn.close()
@@ -143,13 +146,15 @@ def post_evidence():
         #   CREATE A FUNCTION THAT EXTRACT ZIP FILE 
         #   SEND CASE_NUMBER, TITLE, LAST_ROW_ID 
         init(last_id)
-        extract(case_number, title, last_id)
+        extract(filename, last_id)
         add_to_database(last_id)
         
         return make_response("", 200)
-    
+    except sqlite3.IntegrityError as e:
+        return make_response("Integrity Error", 400)
     except Exception as e:
         print(e)
     except:
         print("Error")
+    
     return make_response("", 400)
