@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 
 const BACKEND = 'http://localhost:5000/'
 
-const CaseDetail = () => {
+const CaseReport = () => {
     const { id } = useParams();
     const [report, setReport] = useState([])
     useEffect(
@@ -30,4 +30,7 @@ const CaseDetail = () => {
     )
     console.log(report)
 
+    return(<></>)
 }
+
+export default CaseReport;

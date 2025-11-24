@@ -1,0 +1,169 @@
+{
+  "conversation_id": "mock-002",
+  "topic": "Planning a weekend team retreat",
+  "participants": [
+    { "id": "u01", "name": "Alice" },
+    { "id": "u02", "name": "Bob" },
+    { "id": "u03", "name": "Carla" },
+    { "id": "u04", "name": "Dan" }
+  ],
+  "messages": [
+    {
+      "id": 1,
+      "sender": "Alice",
+      "timestamp": "2025-11-19T08:00:03Z",
+      "text": "Good morning everyone! We need to finalize plans for the weekend retreat. Any ideas on location?"
+    },
+    {
+      "id": 2,
+      "sender": "Bob",
+      "timestamp": "2025-11-19T08:02:15Z",
+      "text": "I'd be down for somewhere close to the lake. Heard Lakeview Lodge is available."
+    },
+    {
+      "id": 3,
+      "sender": "Carla",
+      "timestamp": "2025-11-19T08:03:10Z",
+      "text": "Lakeview is nice, but it's a bit pricey. Maybe we should consider Riverside Cabin?"
+    },
+    {
+      "id": 4,
+      "sender": "Dan",
+      "timestamp": "2025-11-19T08:05:55Z",
+      "text": "Riverside Cabin has bad cell signal though. Remember last year?",
+      "reactions": [{ "from": "Bob", "emoji": "😅" }]
+    },
+    {
+      "id": 5,
+      "sender": "Alice",
+      "timestamp": "2025-11-19T08:06:20Z",
+      "text": "True. We do need connectivity in case something urgent comes up."
+    },
+    {
+      "id": 6,
+      "sender": "Carla",
+      "timestamp": "2025-11-19T08:08:01Z",
+      "text": "What about Maplewood Retreat? It has Wi-Fi, a fire pit, and hiking trails."
+    },
+    {
+      "id": 7,
+      "sender": "Bob",
+      "timestamp": "2025-11-19T08:11:47Z",
+      "text": "Maplewood sounds great. What's the pricing?"
+    },
+    {
+      "id": 8,
+      "sender": "Carla",
+      "timestamp": "2025-11-19T08:12:09Z",
+      "text": "About $140 per person for two nights. Meals included."
+    },
+    {
+      "id": 9,
+      "sender": "Dan",
+      "timestamp": "2025-11-19T08:13:15Z",
+      "text": "That's actually pretty reasonable. I'm in."
+    },
+    {
+      "id": 10,
+      "sender": "Alice",
+      "timestamp": "2025-11-19T08:14:22Z",
+      "text": "Okay, let's take a quick vote. Maplewood Retreat—yes or no?"
+    },
+    {
+      "id": 11,
+      "sender": "Bob",
+      "timestamp": "2025-11-19T08:15:00Z",
+      "text": "Yes 👍"
+    },
+    {
+      "id": 12,
+      "sender": "Carla",
+      "timestamp": "2025-11-19T08:15:14Z",
+      "text": "Yes!"
+    },
+    {
+      "id": 13,
+      "sender": "Dan",
+      "timestamp": "2025-11-19T08:15:28Z",
+      "text": "Yes for me!"
+    },
+    {
+      "id": 14,
+      "sender": "Alice",
+      "timestamp": "2025-11-19T08:16:09Z",
+      "text": "Awesome. I'll make the reservation today."
+    },
+    {
+      "id": 15,
+      "sender": "Bob",
+      "timestamp": "2025-11-19T08:18:45Z",
+      "text": "Should we plan group activities? I'm thinking board games and a cooking challenge."
+    },
+    {
+      "id": 16,
+      "sender": "Carla",
+      "timestamp": "2025-11-19T08:19:32Z",
+      "text": "Cooking challenge sounds fun. Maybe teams of two?"
+    },
+    {
+      "id": 17,
+      "sender": "Dan",
+      "timestamp": "2025-11-19T08:20:10Z",
+      "text": "Let’s just make sure Bob isn’t the judge again. He always chooses the spiciest dish 😂",
+      "reactions": [{ "from": "Alice", "emoji": "🔥" }]
+    },
+    {
+      "id": 18,
+      "sender": "Bob",
+      "timestamp": "2025-11-19T08:21:44Z",
+      "text": "Hey, spice is flavor! But fine, someone else can judge."
+    },
+    {
+      "id": 19,
+      "sender": "Alice",
+      "timestamp": "2025-11-19T08:23:10Z",
+      "text": "I'll judge. I'm completely unbiased. Except toward chocolate desserts."
+    },
+    {
+      "id": 20,
+      "sender": "Carla",
+      "timestamp": "2025-11-19T08:24:55Z",
+      "text": "Noted. Making chocolate dessert."
+    },
+    {
+      "id": 21,
+      "sender": "Dan",
+      "timestamp": "2025-11-19T08:26:01Z",
+      "text": "Should we share a packing list in another thread?",
+      "thread": {
+        "thread_id": "t01",
+        "messages": [
+          {
+            "id": "t01-1",
+            "sender": "Alice",
+            "timestamp": "2025-11-19T08:27:20Z",
+            "text": "Yes—I'll start one."
+          },
+          {
+            "id": "t01-2",
+            "sender": "Bob",
+            "timestamp": "2025-11-19T08:28:11Z",
+            "text": "Add marshmallows, please."
+          },
+          {
+            "id": "t01-3",
+            "sender": "Carla",
+            "timestamp": "2025-11-19T08:29:30Z",
+            "text": "And bug spray!"
+          }
+        ]
+      }
+    },
+    {
+      "id": 22,
+      "sender": "Alice",
+      "timestamp": "2025-11-19T08:30:44Z",
+      "text": "Okay everyone, I'll share a full plan later today. Great progress!"
+    }
+  ]
+}

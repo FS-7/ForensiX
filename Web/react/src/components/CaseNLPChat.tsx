@@ -129,7 +129,7 @@ export const CaseNLPChat = ({ caseData }: CaseNLPChatProps) => {
         )}
       </ScrollArea>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -139,11 +139,11 @@ export const CaseNLPChat = ({ caseData }: CaseNLPChatProps) => {
           rows={2}
           disabled={isLoading}
         />
-        <Button onClick={sendMessage} disabled={isLoading || !input.trim()} size="icon">
+        <Button onClick={sendMessage} disabled={isLoading || !input.trim()} size="lg" className="">
           {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="aspect-square h-4 w-4 animate-spin" />
           ) : (
-            <Send className="h-4 w-4" />
+            <Send className="aspect-square h-4 w-4" />
           )}
         </Button>
       </div>

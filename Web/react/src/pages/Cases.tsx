@@ -32,7 +32,6 @@ const Cases = () => {
 		},
 		[]
 	)
-	console.log(cases)
 	
 	const [searchTerm, setSearchTerm] = useState("");
 	const [statusFilter, setStatusFilter] = useState("all");

@@ -1,22 +1,30 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+#   FLASK UTILITY
+from flask import Flask, Blueprint, request, make_response, session
+from flask_cors import CORS
+from werkzeug.utils import secure_filename
+from forensix.parser import *
+
+#   GENERAL UTILITY
+from datetime import datetime
+from collections import defaultdict
+from typing import Any, List
+
+import os, uuid, hashlib, json, random
+
+#   DATABASE UTILITY
+from mysql import connector
+import chromadb, sqlite3
+
+#   AI UTILITY
+from transformers import AutoModelForCausalLM, AutoTokenizer,  pipeline
 from langchain_core.documents import Document
 #from langchain_community import 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
-from typing import Any, List
-from flask import Flask, Blueprint, request, make_response, session
-from flask_cors import CORS, cross_origin
-from mysql import connector
-from datetime import datetime
-from collections import defaultdict
-
+import whisperx
+import torch
 import pandas as pd 
 import numpy as np
-import chromadb
-import os
-import uuid
-import hashlib, uuid, json, os, random
-import sqlite3
 
 '''
 cnx = connector.connect(
@@ -28,44 +36,88 @@ cnx = connector.connect(
 )
 '''
 
+
 DB_LOCATION = "../db/Forensix.db"
-conn = None
+
+UPLOAD_FOLDER = '../upload'
+ALLOWED_EXTENSIONS = {'.zip'}
+
+gemma = "google/gemma-2-2b-it"
+ibm_granite = "ibm-granite/granite-4.0-h-1b"
+
+embedding_model = "all-MiniLM-L6-v2"
+nlp = gemma
+zsc = "MoritzLaurer/deberta-v3-large-zeroshot-v2.0"
+asr = "large-v3"
+
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
+torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+batch_size = 12
+language = "en"
+
+asr_model = None
+nlp_model = None
+zsc_model = None
+     
+def load_ASR():
+    asr_model = whisperx.load_model(asr, device, compute_type=str(torch_dtype).split(".")[1])
+    if asr_model != None:
+        print(f"{asr} Loaded!")
+
+def load_NLP():
+    nlp_model = pipeline("text-generation", model=nlp, model_kwargs={"torch_dtype": torch_dtype}, device=device)
+    if nlp_model != None:
+        print(f"{nlp} Loaded!")
+
+def load_ZSC():
+    zsc_model = pipeline("zero-shot-classification", model=zsc)
+    if zsc_model != None:
+        print(f"{zsc} Loaded!")
+
+load_ASR()
+load_NLP()
+load_ZSC()
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def init_db():
-    conn = sqlite3.connect(DB_LOCATION)
-    cur = conn.cursor()
-    cur.execute(
-        '''
-        CREATE TABLE IF NOT EXISTS CRIME_CASES(
-            CASE_ID VARCHAR(32) NOT NULL PRIMARY KEY,
-            TITLE VARCHAR(50) NOT NULL,
-            DESCRIPTION VARCHAR(255) NOT NULL,
-            TYPE VARCHAR(20) NOT NULL,
-            STATUS INT NOT NULL,
-            SEVERITY INT NOT NULL,
-            LOCATION VARCHAR(255) NOT NULL,
-            DATE_OCCURED DATETIME NOT NULL,
-            DATE_REPORTED DATETIME NOT NULL,
-            ASSIGNED_OFFICER VARCHAR(32),
-            WITNESSES INT,
-            NOTES VARCHAR(100)
-        );
-        '''    
-    )
-    cur.execute(
-        '''
-        CREATE TABLE IF NOT EXISTS EVIDENCES(
-            CASE_ID VARCHAR(32) NOT NULL REFERENCES CRIME_CASES(CASE_ID),
-            TITLE VARCHAR(50) NOT NULL,
-            REFERENCE VARCHAR(512) NOT NULL
-        );
-        '''
-    )
-    conn.commit()
+    try:
+        conn = sqlite3.connect(DB_LOCATION)
+        cur = conn.cursor()
+        cur.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS CRIME_CASES(
+                CASE_ID VARCHAR(32) NOT NULL PRIMARY KEY,
+                TITLE VARCHAR(50) NOT NULL,
+                DESCRIPTION VARCHAR(255) NOT NULL,
+                TYPE VARCHAR(20) NOT NULL,
+                STATUS INT NOT NULL,
+                SEVERITY INT NOT NULL,
+                LOCATION VARCHAR(255) NOT NULL,
+                DATE_OCCURED DATETIME NOT NULL,
+                DATE_REPORTED DATETIME NOT NULL,
+                ASSIGNED_OFFICER VARCHAR(32),
+                WITNESSES INT,
+                NOTES VARCHAR(100)
+            );
+            CREATE TABLE IF NOT EXISTS EVIDENCES(
+                CASE_ID VARCHAR(32) NOT NULL REFERENCES CRIME_CASES(CASE_ID),
+                TITLE VARCHAR(50) NOT NULL,
+                REFERENCE VARCHAR(512) NOT NULL
+            );
+            '''    
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+    
+    except Exception as e:
+        print(e)
     
 def get_conn():
     return sqlite3.connect(DB_LOCATION)
-
 
 def split_documents(documents, chunk_size=1000, chunk_overlap=200):
     """Split documents into smaller chunks for better RAG performance"""
@@ -77,8 +129,7 @@ def split_documents(documents, chunk_size=1000, chunk_overlap=200):
     )
     split_docs = text_splitter.split_documents(documents)
     print(f"Split {len(documents)} documents into {len(split_docs)} chunks")
-    
-    # Show example of a chunk
+
     if split_docs:
         print(f"\nExample chunk:")
         print(f"Content: {split_docs[0].page_content[:200]}...")
@@ -87,7 +138,7 @@ def split_documents(documents, chunk_size=1000, chunk_overlap=200):
     return split_docs
 
 class EmbeddingManager:
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+    def __init__(self, model_name: str = embedding_model):
         self.model_name = model_name
         self.model = None
         self._load_model()
@@ -153,7 +204,6 @@ class VectorStore:
             metadatas.append(metadata)
             
             documents_text.append(doc.page_content)
-            
             embeddings_list.append(embedding.tolist())
         
         try:
@@ -187,9 +237,7 @@ class RAGRetriever:
                 n_results=top_k
             )
             
-            # Process results
             retrieved_docs = []
-            
             if results['documents'] and results['documents'][0]:
                 documents = results['documents'][0]
                 metadatas = results['metadatas'][0]

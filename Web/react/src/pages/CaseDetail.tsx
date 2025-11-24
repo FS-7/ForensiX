@@ -1,13 +1,13 @@
 import { useParams, Link } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
-import { mockCases } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar, MapPin, User, AlertCircle, FileText, Shield } from "lucide-react";
 import { CaseNLPChat } from "@/components/CaseNLPChat";
 import { useEffect, useState } from "react";
-import { AddEvidence } from "@/components/AddEvidence";
+import { Evidence } from "@/components/Evidence";
+import CaseReport from "@/components/CaseReport";
 
 const BACKEND = 'http://localhost:5000/'
 
@@ -36,7 +36,6 @@ const CaseDetail = () => {
 		},
 		[]
 	)
-	console.log(cases)
 	const case_ = cases.find((c) => c.id === id);
 
 	if (!case_) {
@@ -114,23 +113,7 @@ const CaseDetail = () => {
 							</h2>
 							<p className="text-foreground leading-relaxed">{case_.description}</p>
 						</Card>
-
-						{case_.evidence && case_.evidence.length > 0 && (
-							<Card className="p-6">
-								<h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-									<Shield className="h-5 w-5 text-primary" />
-									Evidence
-								</h2>
-								<ul className="space-y-2">
-									{case_.evidence.map((item, index) => (
-										<li key={index} className="flex items-center gap-2 text-foreground">
-											<div className="h-2 w-2 bg-primary rounded-full" />
-											{item}
-										</li>
-									))}
-								</ul>
-							</Card>
-						)}
+						<CaseReport />
 
 						{case_.notes && (
 							<Card className="p-6">
@@ -142,7 +125,7 @@ const CaseDetail = () => {
 
 					{/* Sidebar */}
 					<div className="space-y-6">
-						<AddEvidence case_={case_}/>
+						<Evidence case_={case_}/>
 						<Card className="p-6">
 							<h2 className="text-xl font-semibold mb-4">Case Details</h2>
 							<div className="space-y-4">
