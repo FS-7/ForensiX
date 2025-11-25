@@ -7,7 +7,9 @@ import re, sqlite3
 
 def parseSMS_CSV(loc):
     try:
-        sms = pd.read_csv(loc+"sms.csv", header=None)        
+        sms = pd.read_csv(loc+"sms.csv", header=None)
+        if sms.iat[0, 0] == "No result found.":
+            return pd.DataFrame()
         sms = sms.loc[:, [2, 12, 4, 5, 9, 18]]
         sms.columns = ["Address", "Body", "Date Sent", "Date Received", "Type", "Seen"]
         for i in sms[1:]:
@@ -31,7 +33,8 @@ def parseSMS_CSV(loc):
 def parseLogsCSV(loc):
     try:
         call_logs = pd.read_csv(loc+"call_logs.csv", header=None)
-        print(call_logs)
+        if call_logs.iat[0, 0] == "No result found.":
+            return pd.DataFrame()
         
         call_logs = call_logs.iloc[: , [9, 24, 1, 26]]
         call_logs.columns = ["Number", "Time", "Duration", "Type"]
@@ -52,6 +55,8 @@ def parseLogsCSV(loc):
 def parseContactsCSV(loc):
     try:
         contacts = pd.read_csv(loc+"contacts.csv", header=None)
+        if contacts.iat[0, 0] == "No result found.":
+            return pd.DataFrame()
         contacts = contacts.iloc[:, [16, 1, 2, 8]]
         contacts.columns = ["Name", "Number", "Group", "Email"]
 
@@ -63,6 +68,8 @@ def parseContactsCSV(loc):
 
         return contacts
     
+    except pd.errors.EmptyDataError as e:
+        print("Khali hai", e)
     except Exception as e:
         print(f"Error: {e}")
     except:
@@ -78,7 +85,6 @@ def parseSMS_SQL(loc):
 
     return sms_documents
     
-        
 def parseLogsSQL(loc):    
     call_logs = sqlite3.connect(loc + "call_log.db")
     call_logs_cursor = call_logs.cursor()
@@ -87,7 +93,6 @@ def parseLogsSQL(loc):
     for i, c in enumerate(call_logs_cursor.execute("SELECT * FROM CALLS;").fetchall()):
         call_log_documents.loc[i] = [ c[1], datetime.fromtimestamp(int(c[5])//1000).strftime("%d-%m-%Y %H:%M:%S"), c[6], "INCOMING" if c[8]==1 else "OUTGOING" if c[8] == 2 else "MISSED" if c[8] == 3 else "REJECTED"]
     
-    print(call_log_documents)
     return call_log_documents
     
 def scan_files(root="."):

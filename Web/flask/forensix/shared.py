@@ -3,27 +3,26 @@ from flask import Flask, Blueprint, request, make_response, session
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from forensix.parser import *
-from forensix.classes import *
 
 #   GENERAL UTILITY
 from datetime import datetime
 from collections import defaultdict
 
-import os, uuid, hashlib, json, random
+import os, hashlib, json, random
 
 #   DATABASE UTILITY
 import sqlite3
 
 #   AI UTILITY
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 import torch
 import pandas as pd 
 import numpy as np
 
+DB_LOCATION = "../Forensix.db"
 EXTRACTED_FILES_LOCATION = "../data"
-DB_LOCATION = "../db/Forensix.db"
-
+EXT_DB_LOCATION = "../db"
 UPLOAD_FOLDER = '../upload'
+
 ALLOWED_EXTENSIONS = {'.zip'}
 
 def allowed_file(filename):
@@ -71,21 +70,3 @@ def init_db():
     
 def get_conn():
     return sqlite3.connect(DB_LOCATION)
-
-def split_documents(documents, chunk_size=1000, chunk_overlap=200):
-    """Split documents into smaller chunks for better RAG performance"""
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap,
-        length_function=len,
-        separators=["\n\n", "\n", " ", ""]
-    )
-    split_docs = text_splitter.split_documents(documents)
-    print(f"Split {len(documents)} documents into {len(split_docs)} chunks")
-
-    if split_docs:
-        print(f"\nExample chunk:")
-        print(f"Content: {split_docs[0].page_content[:200]}...")
-        print(f"Metadata: {split_docs[0].metadata}")
-    
-    return split_docs

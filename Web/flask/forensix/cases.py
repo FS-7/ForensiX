@@ -67,14 +67,15 @@ def post_cases():
     witnesses = data['witnesses']
     notes = ""
     
+    dateOccurred = datetime.strptime(dateOccurred, "%Y-%m-%d").strftime("%m %d %Y %H:%M:%S")
     sql = "INSERT INTO CRIME_CASES(CASE_ID, TITLE, DESCRIPTION, TYPE, STATUS, SEVERITY, LOCATION, DATE_OCCURED, DATE_REPORTED, ASSIGNED_OFFICER, WITNESSES, NOTES) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     
     inserted = False
     while inserted != True:
         try:
             case_id = "CC-" + datetime.now().strftime("%Y") + "-" + str(random.randint(0, 999)).zfill(3)
-    
-            values = [case_id, title, description, type, status,severity, location, dateOccurred, dateReported, assignedOfficer, witnesses, notes]
+            
+            values = [case_id, title, description, type, status, severity, location, dateOccurred, dateReported, assignedOfficer, witnesses, notes]
     
             temp(sql, values)
             inserted = True
@@ -117,12 +118,11 @@ def delete_cases():
 
 @cases.route('/addEvidence', methods=["POST"])
 def post_evidence():
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     data = request.form
     case_number = data['caseNumber']
     title = data['title']
     filename = ""
-    if not os.path.isdir(UPLOAD_FOLDER):
-        os.mkdir(UPLOAD_FOLDER)
     
     try:
         for i in request.files:

@@ -1,9 +1,7 @@
 from forensix.shared import *
-from forensix.parser import parseSMS_CSV, parseLogsCSV, parseContactsCSV, parseSMS_SQL, parseLogsSQL, scan_files
+from forensix.parser import parseContactsCSV, parseSMS_SQL, parseLogsSQL, scan_files
 import requests
 import zipfile
-
-EXT_DB_LOCATION = "../data/db"
 
 def init(id):
     try:
@@ -68,8 +66,7 @@ def init(id):
     
 def extract(filename, id):
     zipfile_path = f"{UPLOAD_FOLDER}/{filename}"
-    if not os.path.exists(f"{EXTRACTED_FILES_LOCATION}/{id}"):
-        os.makedirs(f"{EXTRACTED_FILES_LOCATION}/{id}")
+    os.makedirs(f"{EXTRACTED_FILES_LOCATION}/{id}", exist_ok=True)
     
     try:
         with zipfile.ZipFile(zipfile_path, 'r') as zip_ref:
@@ -93,6 +90,7 @@ def add_to_database(id):
         
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
         cur = conn.cursor()
+        
         cur.executemany(
             '''
                 INSERT INTO MESSAGES(ADDRESS, BODY, DATE_SENT, DATE_RECEIVED, TYPE, SEEN) VALUES(?, ?, ?, ?, ?, ?);
@@ -108,7 +106,7 @@ def add_to_database(id):
             call_logs.values
         )
         conn.commit()
-        print(contacts.values)
+        
         cur.executemany(
             '''
                 INSERT INTO CONTACTS(NAME, NUMBER, GROUP_ID, EMAIL) VALUES(?, ?, ?, ?);
@@ -116,7 +114,6 @@ def add_to_database(id):
             contacts.values
         )
         conn.commit()
-        
         
         for file in files:
             cur.execute(
@@ -132,7 +129,34 @@ def add_to_database(id):
     except Exception as e:
         print(e)
     return
-        
+
+def ask_whisperx(audio):
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    payload = {'audio': audio}
+    
+    session = requests.Session()
+    res = session.post("http://localhost:5001/asr", headers=headers, data=payload)
+    return res.text
+
+def ask_gemma(messages):
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    payload = {'messages': messages}
+    
+    session = requests.Session()
+    res = session.post("http://localhost:5001/nlp", headers=headers, data=payload)
+    
+    if res.status_code == 200:
+        return res.text
+    else:
+        return ""
+
+def analyze(id):
+    text_outputs = analyze_text(id)
+    #images_outputs = analyze_images(id)
+    audio_outputs = analyze_audios(id)
+    contacts_output = analyze_contacts(id)
+    return {"text": text_outputs, "contacts": contacts_output, "audio": audio_outputs}#, "images": images_outputs}
+
 def analyze_text(id):
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
@@ -150,29 +174,21 @@ def analyze_text(id):
         res = defaultdict(str)
         output = defaultdict(str)
         
-        for i in reversed(sms):
+        for i in sms:
             res[i[0]] = res[i[0]] + ("Sender: " if i[4] == "Sent" else "Receiver: ") + i[1] + " "    
         
         for k in res.keys():
-            messages = [
-                {
-                    "role": "user", "content": 
-                    f"""
-                    Text: {res[k]}
-                    Query: In one word classify the text into one of the following categories: {', '.join(candidate_labels)}. No explaination.
-                    """
-                }
-            ]
+            print(k)
+            messages = f"""
+                Text: {res[k]}.
+                Query: In one word classify the text into one of the following categories: {', '.join(candidate_labels)}. No explaination.
+            """
             output[k] = ask_gemma(messages)
-        return (output, res)
+        return output
         
     except Exception as e:
         print(e)
     return 
-
-def ask_gemma(messages):
-    res = request.post("http://localhost:5001", data=messages)
-    return res.text
     
 def analyze_images(id):
     try:
@@ -189,21 +205,19 @@ def analyze_audios(id):
         cur = conn.cursor()
         audios = cur.execute(
             '''
-                SELECT path FROM FILES WHERE EXT=mp3 or EXT=m4a or EXT=obb;
+                SELECT path FROM FILES WHERE EXT='mp3' or EXT='m4a' or EXT='obb' or EXT='mpeg';
             '''
         ).fetchall()
-        
+        print(audios)
         results = defaultdict(list)
         for audio_path in audios:
             results[audio_path] = ask_whisperx(audio_path)
+            
         return results
+    
     except Exception as e:
         print(e)
     return 
-
-def ask_whisperx(audio_path):
-    res = requests.post("http://localhost:5001/asr", data=audio_path)
-    return res.text
 
 def analyze_contacts(id):
     try:
@@ -211,7 +225,7 @@ def analyze_contacts(id):
         cur = conn.cursor()
         results = cur.execute(
             '''
-                SELECT NUMBER FROM CALL_LOGS ORDER BY DATE DESC LIMIT 5;
+                SELECT NUMBER FROM CALL_LOGS ORDER BY DATE LIMIT 5;
             '''
         ).fetchall()
         
@@ -220,60 +234,48 @@ def analyze_contacts(id):
         print(e)
     return 
 
-def analyze(id):
-    text_outputs = analyze_text(id)
-    #images_outputs = analyze_images(id)
-    audio_outputs = analyze_audios(id)
-    contacts_output = analyze_contacts(id)
-    return {"text": text_outputs, "contacts": contacts_output, "audio": audio_outputs}#, "images": images_outputs}
-
 def generate_query(query):
     try:
-        messages = [
-            {
-                "role": "user", "content": 
-                f"""
-                Context: You are a SQL generator. 
-                Given the following database schema:
-                    Table: Messages
-                    Columns:
-                    - id (integer)
-                    - Address (text)
-                    - Date Sent (date)
-                    - Date Received (date)
-                    - Type (text)
-                    - Body (text)
-                    - Seen (boolean)
-                    
-                    Table: Contacts
-                    Columns:
-                    - id (integer)
-                    - name (text)
-                    - number (number)
-                    - email (text)
-                    
-                    Table: Call Logs
-                    Columns:
-                    - id (integer)
-                    - Owner (text)
-                    - Date Time (number)
-                    - Duration (number)
-                    - Type (text)
-                    
-                    Table: Files
-                    Columns:
-                    - path (text)
-                    - name (text)
-                    - parent (text)
-                    - size (number)
-                    - datetime (datetime)
-                    - ext (text) alias type
-                Convert the following user question into a correct, safe SQL query. 
-                Return only SQL, no explanations.
-                Query: {query}
-                """
-            }
-        ]
+        messages = f"""
+            Context: You are a SQL generator. 
+            Given the following database schema:
+                Table: Messages
+                Columns:
+                - id (integer)
+                - Address (text)
+                - Date Sent (date)
+                - Date Received (date)
+                - Type (text)
+                - Body (text)
+                - Seen (boolean)
+                
+                Table: Contacts
+                Columns:
+                - id (integer)
+                - name (text)
+                - number (number)
+                - email (text)
+                
+                Table: Call Logs
+                Columns:
+                - id (integer)
+                - Owner (text)
+                - Date Time (number)
+                - Duration (number)
+                - Type (text)
+                
+                Table: Files
+                Columns:
+                - path (text)
+                - name (text)
+                - parent (text)
+                - size (number)
+                - datetime (datetime)
+                - ext (text) alias type
+            Convert the following user question into a correct, safe SQL query. 
+            Return only SQL, no explanations.
+            Query: {query}
+        """
         return ask_gemma(messages)
     
     except Exception as e:
@@ -285,7 +287,7 @@ def run_query(query):
     query = query[6:-3]
     if str(query).lower().startswith("select"):
         return
-    conn = sqlite3.connect("../data/db/"+"10.db")
+    conn = sqlite3.connect("../db/"+"2.db")
     cur = conn.cursor()
     output = cur.execute(
         query,
@@ -295,14 +297,49 @@ def run_query(query):
     return output
     
 def convert_to_nlp(results):
-    messages = [
-        {
-            "role": "user", "content": 
-            f"""
-            Data: {results}
-            Convert the following data into Table
-            """
-        }
-    ]
+    messages = f"""
+        Given the following database schema:
+        Table: Messages
+        Columns:
+        - id (integer)
+        - Address (text)
+        - Date Sent (date)
+        - Date Received (date)
+        - Type (text)
+        - Body (text)
+        - Seen (boolean)
+        
+        Table: Contacts
+        Columns:
+        - id (integer)
+        - name (text)
+        - number (number)
+        - email (text)
+        
+        Table: Call Logs
+        Columns:
+        - id (integer)
+        - Owner (text)
+        - Date Time (number)
+        - Duration (number)
+        - Type (text)
+        
+        Table: Files
+        Columns:
+        - path (text)
+        - name (text)
+        - parent (text)
+        - size (number)
+        - datetime (datetime)
+        - ext (text) alias type
+        
+        Convert the following data into Visualizing Table
+        
+        columns1, column2
+        row1: data1, data2
+        row2: data1, data2
+        
+        Data: {results}
+    """
     return ask_gemma(messages)
     

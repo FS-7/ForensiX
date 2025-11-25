@@ -8,8 +8,8 @@ from flask_jwt_extended import JWTManager
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SESSION_KEY")
-app.config['CORS_HEADERS'] = 'Content-Type'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config["PORT"] = 5001
 
 cors = CORS(app)
 

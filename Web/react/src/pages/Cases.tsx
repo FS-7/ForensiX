@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { CaseCard } from "@/components/CaseCard";
-import { mockCases } from "@/lib/mockData";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";

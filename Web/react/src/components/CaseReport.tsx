@@ -2,6 +2,8 @@ import { CrimeCase } from "@/types/case";
 import { useEffect, useState } from "react";
 import { Card } from "./ui/card";
 import { FileText } from "lucide-react";
+import { RecentContacts } from "./RecentContacts";
+import { ContactCard } from "./ContactCard";
 
 const BACKEND = 'http://localhost:5000/'
 
@@ -10,18 +12,19 @@ interface CaseCardProps {
 }
 
 const CaseReport = ({ case_ }: CaseCardProps) => {
-    const [report, setReport] = useState({})
+    const [report, setReport] = useState([])
     const EvidenceReport = (evidence) => {
         var results = {}
         useEffect(
             () => {
                 async function getCases() {
+                    console.log("fetching from following\n", BACKEND + 'internal/generateReport/' + evidence)
                     await fetch(BACKEND + 'internal/generateReport/' + evidence,
 
                     )
                         .then(
                             (res) => {
-                                res.json().then(x => setReport(x))
+                                res.json().then(x => setReport(report => report = [...report, x]))
                             }
                         )
                         .catch(
@@ -34,33 +37,36 @@ const CaseReport = ({ case_ }: CaseCardProps) => {
             },
             []
         )
-        return results
     }
 
-    for (let evidence in case_.evidences) {
-        EvidenceReport(case_.evidences[evidence][0])
-        console.log(report["text"])
-    }
+    case_.evidences.forEach((evidence) => {
+        EvidenceReport(evidence[0])
+
+    })
 
     return (
         <>
             {
-                <Card className="p-6">
-                    <h2 className="text-xl font-semibold mb-4">Evidences</h2>
-                    {
-                        report["text"] && report["text"].length > 0 &&
-                        Object.entries(report["text"]).map( ([k, v], i) => (
-                            <div className="space-y-4" key={i}>
-                                <div>
-                                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                                        <span className="text-sm font-medium">Evidence: </span>
-                                        <p className="text-foreground capitalize">{k}: {report["text"][v]}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    }
-                </Card>
+                report.map((i, j) => (
+
+                    <Card className="p-6" key={j}>
+                        <h2 className="text-xl font-semibold mb-4">Evidences Summary</h2>
+                        <h3 className="text-xl font-semibold mb-4">Messages</h3>
+                        {
+                            i &&
+                            Object.entries(i["text"]).map((i) => (
+                                <ContactCard
+                                    key={i[0]}
+                                    number={i[0]}
+                                    label={i[1]}
+                                    isThreat={i[1] != "Normal"}
+                                />
+                            ))
+                        }
+
+                        <RecentContacts contacts={i["contacts"]} />
+                    </Card>
+                ))
             }
         </>
     )

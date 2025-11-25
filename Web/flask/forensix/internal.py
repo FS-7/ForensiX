@@ -26,7 +26,7 @@ def nlp_query():
     results = run_query(sql_query)
     print("Results: ", results)
     
-    output = convert_to_nlp(results)
-    print("Output: ", output)
-    return make_response(output, 200)
+    #   output = convert_to_nlp(results)
+    #   print("Output: ", output)
+    return make_response(results, 200)
 

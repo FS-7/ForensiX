@@ -23,18 +23,23 @@ export const CaseNLPChat = ({ caseData }: CaseNLPChatProps) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
+  
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = { role: "user", content: input };
+
     fetch(BACKEND + 'internal/nlp', {
       method: 'POST',
       body: new URLSearchParams({
         query: input,
       })
     })
-    .then((res) => console.log(res))
+    .then((res) => {res.json().then(r => {
+      const botMessage: Message = { role: "assistant", content: r };
+      setMessages(prev => [...prev, botMessage]);
+      setIsLoading(false);
+    })})
     .catch((res) => console.log(res))
     setMessages(prev => [...prev, userMessage]);
     setInput("");
