@@ -43,7 +43,7 @@ def get_cases():
 
 @cases.route('/', methods=["POST"])
 def post_cases():
-    def temp():
+    def temp(sql, values):
         conn = get_conn()
         cursor = conn.cursor()
         
@@ -68,13 +68,15 @@ def post_cases():
     notes = ""
     
     sql = "INSERT INTO CRIME_CASES(CASE_ID, TITLE, DESCRIPTION, TYPE, STATUS, SEVERITY, LOCATION, DATE_OCCURED, DATE_REPORTED, ASSIGNED_OFFICER, WITNESSES, NOTES) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
-    values = [case_id, title, description, type, status,severity, location, dateOccurred, dateReported, assignedOfficer, witnesses, notes]
     
     inserted = False
     while inserted != True:
         try:
             case_id = "CC-" + datetime.now().strftime("%Y") + "-" + str(random.randint(0, 999)).zfill(3)
-            temp(case_id)
+    
+            values = [case_id, title, description, type, status,severity, location, dateOccurred, dateReported, assignedOfficer, witnesses, notes]
+    
+            temp(sql, values)
             inserted = True
             return make_response("", 200)
         

@@ -26,14 +26,6 @@ DB_LOCATION = "../db/Forensix.db"
 UPLOAD_FOLDER = '../upload'
 ALLOWED_EXTENSIONS = {'.zip'}
 
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
-torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-batch_size = 12
-language = "en"
-
-asr = ASR(device, torch_dtype)
-nlp = NLP(device, torch_dtype)
-     
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS

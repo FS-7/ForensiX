@@ -1,30 +1,27 @@
 from ai.shared import *
-#from ai import 
 
 app = Flask(__name__)
 #app.secret_key = os.getenv("SESSION_KEY")
-#cors = CORS(app)
+cors = CORS(app)
 
 @app.route('/checkStatus', methods=["GET"])
 def checkStatus():
-    print(asr_model != None, nlp_model != None, zsc_model != None)
+    return make_response(str(asr != None and nlp != None), 200)
     
 @app.route('/asr')
-def asr():
-    pass
+def ask_whisperx():
+    data = request.data
+    audio_path = data["audio"]
+    audio = asr.model.load_audio(audio_path)
+    return asr.model.transcribe(audio, batch_size=batch_size, language='en')
 
 @app.route('/nlp')
-def nlp():
-    pass
-
-@app.route('/zsc')
-def zsc():
-    pass
-
-def init():
+def ask_gemma(messages):
     try:
-        load_ASR()
-        load_NLP()
-        load_ZSC()
+        outputs = nlp.model(messages, max_new_tokens=256)
+        assistant_response = outputs[0]["generated_text"][-1]["content"].strip()
+        return assistant_response
+        
     except Exception as e:
         print(e)
+        

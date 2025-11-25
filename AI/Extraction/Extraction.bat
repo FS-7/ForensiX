@@ -5,7 +5,7 @@ set SEVENZIP_PATH="C:\Program Files\7-Zip\7z.exe"
 SET PWD=""
 FOR /F "tokens=*" %%a in ('cd') do SET PWD=%%a
 
-SET ADB_LOCATION="C:\Users\FS\Desktop\platform-tools"
+SET ADB_LOCATION="D:\ForensiX\platform-tools"
 cd /D %ADB_LOCATION%
 
 SET DEVICE="/storage/emulated/0"

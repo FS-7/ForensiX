@@ -1,5 +1,6 @@
 from forensix.shared import *
 from forensix.parser import parseSMS_CSV, parseLogsCSV, parseContactsCSV, parseSMS_SQL, parseLogsSQL, scan_files
+import requests
 import zipfile
 
 EXT_DB_LOCATION = "../data/db"
@@ -85,8 +86,8 @@ def extract(filename, id):
 
 def add_to_database(id):
     try:
-        sms = parseSMS_CSV(f"{EXTRACTED_FILES_LOCATION}/{id}/data/")
-        call_logs = parseLogsCSV(f"{EXTRACTED_FILES_LOCATION}/{id}/data/")
+        sms = parseSMS_SQL(f"{EXTRACTED_FILES_LOCATION}/{id}/data/")
+        call_logs = parseLogsSQL(f"{EXTRACTED_FILES_LOCATION}/{id}/data/")
         contacts = parseContactsCSV(f"{EXTRACTED_FILES_LOCATION}/{id}/data/")
         files = scan_files(f"{EXTRACTED_FILES_LOCATION}/{id}/data/")
         
@@ -98,18 +99,24 @@ def add_to_database(id):
             ''',
             sms.values
         )
+        conn.commit()
+        
         cur.executemany(
             '''
                 INSERT INTO CALL_LOGS(NUMBER, DATE, DURATION, TYPE) VALUES(?, ?, ?, ?);
             ''',
             call_logs.values
         )
+        conn.commit()
+        print(contacts.values)
         cur.executemany(
             '''
                 INSERT INTO CONTACTS(NAME, NUMBER, GROUP_ID, EMAIL) VALUES(?, ?, ?, ?);
             ''',
             contacts.values
         )
+        conn.commit()
+        
         
         for file in files:
             cur.execute(
@@ -125,15 +132,6 @@ def add_to_database(id):
     except Exception as e:
         print(e)
     return
-
-def ask_gemma(messages):
-    try:
-        outputs = nlp.model(messages, max_new_tokens=256)
-        assistant_response = outputs[0]["generated_text"][-1]["content"].strip()
-        return assistant_response
-        
-    except Exception as e:
-        print(e)
         
 def analyze_text(id):
     try:
@@ -172,6 +170,10 @@ def analyze_text(id):
         print(e)
     return 
 
+def ask_gemma(messages):
+    res = request.post("http://localhost:5001", data=messages)
+    return res.text
+    
 def analyze_images(id):
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
@@ -193,12 +195,15 @@ def analyze_audios(id):
         
         results = defaultdict(list)
         for audio_path in audios:
-            audio = asr.model.load_audio(audio_path)
-            results[audio_path] = asr.model.transcribe(audio, batch_size=batch_size, language='en')
+            results[audio_path] = ask_whisperx(audio_path)
         return results
     except Exception as e:
         print(e)
     return 
+
+def ask_whisperx(audio_path):
+    res = requests.post("http://localhost:5001/asr", data=audio_path)
+    return res.text
 
 def analyze_contacts(id):
     try:
@@ -216,7 +221,7 @@ def analyze_contacts(id):
     return 
 
 def analyze(id):
-    text_outputs = analyze_text(id)[0]
+    text_outputs = analyze_text(id)
     #images_outputs = analyze_images(id)
     audio_outputs = analyze_audios(id)
     contacts_output = analyze_contacts(id)
@@ -280,12 +285,13 @@ def run_query(query):
     query = query[6:-3]
     if str(query).lower().startswith("select"):
         return
-    conn = sqlite3.connect("../data/db/"+"1.db")
+    conn = sqlite3.connect("../data/db/"+"10.db")
     cur = conn.cursor()
     output = cur.execute(
         query,
         []
     ).fetchall()
+    print(output)
     return output
     
 def convert_to_nlp(results):
@@ -294,7 +300,7 @@ def convert_to_nlp(results):
             "role": "user", "content": 
             f"""
             Data: {results}
-            Convert the following data in human readable format
+            Convert the following data into Table
             """
         }
     ]
