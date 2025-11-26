@@ -1,7 +1,0 @@
-Text Summarization  ->  INCOMPLETE
-
-Anomaly Detection   ->  USING deberta COMPLETED
-
-NLP QUERYING:  
-    QUERY TO SQL    ->  COMPLETED
-    PARSING SQL     ->  IN PROGRESS
