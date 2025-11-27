@@ -17,12 +17,6 @@ device = "cuda:0" if torch.cuda.is_available() else "cpu"
 torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 batch_size = 12
 language = "en"
-
-ALLOWED_EXTENSIONS = {'.mp3', '.mpeg', '.obb', '.m4a'}
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
            
 class ASR:
     def __init__(self, device, compute_type):

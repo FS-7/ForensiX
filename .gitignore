@@ -1,4 +1,7 @@
-
-__pycache__
-.venv
+Forensix.db
 .env
+data
+db
+upload
+input
+test.ipynb

@@ -283,11 +283,11 @@ def generate_query(query):
         
     return 
 
-def run_query(query):
+def run_query(query, id):
     query = query[6:-3]
     if str(query).lower().startswith("select"):
         return
-    conn = sqlite3.connect("../db/"+"2.db")
+    conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
     cur = conn.cursor()
     output = cur.execute(
         query,

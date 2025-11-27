@@ -16,6 +16,7 @@ def generate_report(id):
 @internal.route('/nlp', methods=["POST"])
 def nlp_query():
     data = request.form
+    id = 1#data["id"]
     query = data['query']
     
     print(query)
@@ -23,7 +24,7 @@ def nlp_query():
     sql_query = generate_query(query)
     print("SQL:", sql_query)
     
-    results = run_query(sql_query)
+    results = run_query(sql_query, id)
     print("Results: ", results)
     
     #   output = convert_to_nlp(results)
