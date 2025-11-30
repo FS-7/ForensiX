@@ -4,6 +4,7 @@ import requests
 import zipfile
 
 def init(id):
+    print("Initializing Evidence Database")
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
         cur = conn.cursor()
@@ -58,6 +59,8 @@ def init(id):
         conn.commit()
         cur.close()
         conn.close()
+        print("Evidence Database Created")
+        
         
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
@@ -65,12 +68,15 @@ def init(id):
         print(e)
     
 def extract(filename, id):
+    print("Extracting Data")
+    
     zipfile_path = f"{UPLOAD_FOLDER}/{filename}"
     os.makedirs(f"{EXTRACTED_FILES_LOCATION}/{id}", exist_ok=True)
     
     try:
         with zipfile.ZipFile(zipfile_path, 'r') as zip_ref:
             zip_ref.extractall(f"{EXTRACTED_FILES_LOCATION}/{id}")
+        print("Data Extracted") 
 
     except zipfile.BadZipFile:
         print(f"Error: '{zipfile_path}' is not a valid zip file.")
@@ -82,6 +88,7 @@ def extract(filename, id):
     return
 
 def add_to_database(id):
+    print("Adding evidence data into database")
     try:
         sms = parseSMS_SQL(f"{EXTRACTED_FILES_LOCATION}/{id}/data/")
         call_logs = parseLogsSQL(f"{EXTRACTED_FILES_LOCATION}/{id}/data/")
@@ -125,12 +132,15 @@ def add_to_database(id):
         conn.commit()
         cur.close()
         conn.close()
+        print("Added evidence data into database")
         
     except Exception as e:
         print(e)
     return
 
 def ask_whisperx(audio):
+    print("Transcribing audio")
+    
     headers = {'User-Agent': 'Mozilla/5.0'}
     payload = {'audio': audio}
     
@@ -139,6 +149,8 @@ def ask_whisperx(audio):
     return res.text
 
 def ask_gemma(messages):
+    print("Asking Gemma")
+    
     headers = {'User-Agent': 'Mozilla/5.0'}
     payload = {'messages': messages}
     
@@ -158,6 +170,8 @@ def analyze(id):
     return {"text": text_outputs, "contacts": contacts_output, "audio": audio_outputs}#, "images": images_outputs}
 
 def analyze_text(id):
+    print("Analyzing Text messages")
+    
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
         cur = conn.cursor()
@@ -184,6 +198,8 @@ def analyze_text(id):
                 Query: In one word classify the text into one of the following categories: {', '.join(candidate_labels)}. No explaination.
             """
             output[k] = ask_gemma(messages)
+        
+        print("Done")
         return output
         
     except Exception as e:
@@ -191,15 +207,19 @@ def analyze_text(id):
     return 
     
 def analyze_images(id):
+    print("Analyzing Images")
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
         cur = conn.cursor()
+        print("Analyzed Images")
        
     except Exception as e:
         print(e)
     return
  
 def analyze_audios(id):
+    print("Analyzing Audio files")
+    
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
         cur = conn.cursor()
@@ -212,7 +232,8 @@ def analyze_audios(id):
         results = defaultdict(list)
         for audio_path in audios:
             results[audio_path] = ask_whisperx(audio_path)
-            
+        
+        print("Analyzed Audio files")
         return results
     
     except Exception as e:
@@ -220,6 +241,7 @@ def analyze_audios(id):
     return 
 
 def analyze_contacts(id):
+    print("Analyzing Images")
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
         cur = conn.cursor()
@@ -228,7 +250,7 @@ def analyze_contacts(id):
                 SELECT NUMBER FROM CALL_LOGS ORDER BY DATE LIMIT 5;
             '''
         ).fetchall()
-        
+        print("Analyzed Contacts")
         return results
     except Exception as e:
         print(e)
@@ -298,48 +320,11 @@ def run_query(query, id):
     
 def convert_to_nlp(results):
     messages = f"""
-        Given the following database schema:
-        Table: Messages
-        Columns:
-        - id (integer)
-        - Address (text)
-        - Date Sent (date)
-        - Date Received (date)
-        - Type (text)
-        - Body (text)
-        - Seen (boolean)
-        
-        Table: Contacts
-        Columns:
-        - id (integer)
-        - name (text)
-        - number (number)
-        - email (text)
-        
-        Table: Call Logs
-        Columns:
-        - id (integer)
-        - Owner (text)
-        - Date Time (number)
-        - Duration (number)
-        - Type (text)
-        
-        Table: Files
-        Columns:
-        - path (text)
-        - name (text)
-        - parent (text)
-        - size (number)
-        - datetime (datetime)
-        - ext (text) alias type
-        
-        Convert the following data into Visualizing Table
-        
-        columns1, column2
-        row1: data1, data2
-        row2: data1, data2
+        Structure this data into a table
         
         Data: {results}
+        
+        No Explaination
     """
     return ask_gemma(messages)
     

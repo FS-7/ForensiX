@@ -9,25 +9,32 @@ def internal_index():
 
 @internal.route('/generateReport/<int:id>', methods=["GET"])
 def generate_report(id):
+    print("Generating Report...")
     response = analyze(id)
     print(response)
+    print("Report Generated")
     return make_response(response, 200)
 
 @internal.route('/nlp', methods=["POST"])
 def nlp_query():
+    print("User Query...")
+    
     data = request.form
     id = 1#data["id"]
     query = data['query']
     
     print(query)
     
+    print("Query to SQL...")
     sql_query = generate_query(query)
     print("SQL:", sql_query)
     
+    print("Executing SQL Query")
     results = run_query(sql_query, id)
     print("Results: ", results)
     
-    #   output = convert_to_nlp(results)
-    #   print("Output: ", output)
+    print("SQL to Table...")
+    output = convert_to_nlp(results)
+    print("Output: ", output)
     return make_response(results, 200)
 

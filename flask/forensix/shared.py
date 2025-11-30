@@ -31,6 +31,7 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def init_db():
+    print("Creating Forensix Database")
     try:
         conn = sqlite3.connect(DB_LOCATION)
         cur = conn.cursor()
@@ -65,7 +66,8 @@ def init_db():
         conn.commit()
         cur.close()
         conn.close()
-    
+        print("Database Created")
+
     except Exception as e:
         print(e)
     

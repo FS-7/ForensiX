@@ -6,6 +6,8 @@ cases = Blueprint('cases', __name__, url_prefix='/cases')
 
 @cases.route('/', methods=["GET"])
 def get_cases():
+    print("Request to access all Cases")
+    
     results = []
     sql = "SELECT * FROM CRIME_CASES;"
     values = {}
@@ -31,6 +33,8 @@ def get_cases():
                     "id": str(id), "caseNumber": i[0], "title": i[1], "description": i[2], "type": i[3], "status": i[4], "severity": i[5], "location": i[6], "dateOccured": i[7], "dateReported": i[8], "assignedOfficer": i[9], "witnesses": i[10], "evidences": evidences[i[0]], "notes": i[11]
                 }
             )
+        print("Request completed")
+        
         return make_response(results, 200)
     
     except Exception as e:
@@ -43,6 +47,8 @@ def get_cases():
 
 @cases.route('/', methods=["POST"])
 def post_cases():
+    print("Adding a case")
+    
     def temp(sql, values):
         conn = get_conn()
         cursor = conn.cursor()
@@ -79,6 +85,8 @@ def post_cases():
     
             temp(sql, values)
             inserted = True
+            print("Case Added Successfully")
+            
             return make_response("", 200)
         
         except sqlite3.IntegrityError:
@@ -90,10 +98,6 @@ def post_cases():
         except:
             print("Error")
             return make_response("", 500)
-
-@cases.route('/', methods=["PUT"])
-def put_cases():
-    return make_response("", 200)
 
 @cases.route('/', methods=["DELETE"])
 def delete_cases():
@@ -118,6 +122,8 @@ def delete_cases():
 
 @cases.route('/addEvidence', methods=["POST"])
 def post_evidence():
+    print("Adding Evidence...")
+    
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     data = request.form
     case_number = data['caseNumber']
@@ -144,12 +150,15 @@ def post_evidence():
         cursor.close()
         conn.commit()
         conn.close()
+        print("Evidence Added Successfully")
+        
         
         #   CREATE A FUNCTION THAT EXTRACT ZIP FILE 
         #   SEND CASE_NUMBER, TITLE, LAST_ROW_ID 
         init(last_id)
         extract(filename, last_id)
         add_to_database(last_id)
+        print("Data Extracted and inserted into database")
         
         return make_response("", 200)
     except sqlite3.IntegrityError as e:
