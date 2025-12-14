@@ -8,6 +8,7 @@ import Cases from "./pages/Cases";
 import CaseDetail from "./pages/CaseDetail";
 import NewCase from "./pages/NewCase";
 import NotFound from "./pages/NotFound";
+import Report from "./pages/Report";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/cases" element={<Cases />} />
           <Route path="/cases/:id" element={<CaseDetail />} />
           <Route path="/new-case" element={<NewCase />} />
+          <Route path="/report/:id" element={<Report />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

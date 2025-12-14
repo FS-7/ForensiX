@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Send, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { CrimeCase } from "@/types/case";
+import { DropdownMenu, DropdownMenuItem } from "./ui/dropdown-menu";
 
 interface Message {
   role: "user" | "assistant";
@@ -22,7 +23,6 @@ export const CaseNLPChat = ({ caseData }: CaseNLPChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
   
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -58,6 +58,7 @@ export const CaseNLPChat = ({ caseData }: CaseNLPChatProps) => {
       <div className="flex items-center gap-2 mb-4">
         <MessageCircle className="h-5 w-5 text-primary" />
         <h2 className="text-xl font-semibold">AI Case Assistant</h2>
+        
       </div>
 
       <ScrollArea className="h-[400px] mb-4 pr-4">

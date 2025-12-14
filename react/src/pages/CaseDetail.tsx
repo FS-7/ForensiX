@@ -1,13 +1,12 @@
 import { useParams, Link } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar, MapPin, User, AlertCircle, FileText, Shield } from "lucide-react";
 import { CaseNLPChat } from "@/components/CaseNLPChat";
 import { useEffect, useState } from "react";
-import { Evidence } from "@/components/Evidence";
-import CaseReport from "@/components/CaseReport";
+import { AddEvidence } from "@/components/AddEvidence";
 
 const BACKEND = 'http://localhost:5000/'
 
@@ -37,6 +36,7 @@ const CaseDetail = () => {
 		[]
 	)
 	const case_ = cases.find((c) => c.id === id);
+	console.log(case_)
 
 	if (!case_) {
 		return (
@@ -113,7 +113,6 @@ const CaseDetail = () => {
 							</h2>
 							<p className="text-foreground leading-relaxed">{case_.description}</p>
 						</Card>
-						<CaseReport case_={case_}/>
 
 						{case_.notes && (
 							<Card className="p-6">
@@ -121,11 +120,31 @@ const CaseDetail = () => {
 								<p className="text-muted-foreground">{case_.notes}</p>
 							</Card>
 						)}
+
+						{case_.evidences && case_.evidences.length > 0 && (
+							<Card className="p-6">
+								<h2 className="text-xl font-semibold mb-4">Evidences</h2>
+								{
+									case_.evidences.map(evidence => (
+										<div key={evidence[0]} className="flex justify-between py-1">
+											<p className="text-foreground">{evidence[1]}</p>
+											<Link to={`/report/${evidence[0]}`} >
+												<Button size="sm" variant="secondary">
+													View Report
+												</Button>
+											</Link>
+											
+										</div>
+									))
+								}
+
+							</Card>
+						)}
 					</div>
 
 					{/* Sidebar */}
 					<div className="space-y-6">
-						<Evidence case_={case_}/>
+						<AddEvidence case_={case_} />
 						<Card className="p-6">
 							<h2 className="text-xl font-semibold mb-4">Case Details</h2>
 							<div className="space-y-4">
