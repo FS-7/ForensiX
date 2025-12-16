@@ -1,12 +1,13 @@
 #   FLASK UTILITY
 from flask import Flask, Blueprint, request, make_response, session
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from werkzeug.utils import secure_filename
 from forensix.parser import *
 
 #   GENERAL UTILITY
 from datetime import datetime
 from collections import defaultdict
+from dotenv import load_dotenv, get_key
 
 import os, hashlib, json, random
 
@@ -18,11 +19,20 @@ import torch
 import pandas as pd 
 import numpy as np
 
-UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER")
-DB_LOCATION = os.getenv("DB_LOCATION")
-EXTRACTED_FILES_LOCATION = os.getenv("EXTRACTED_FILES_LOCATION")
-EXT_DB_LOCATION = os.getenv("EXT_DB_LOCATION")
-AI_URL = os.getenv("AI_URL")
+BASEDIR = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(BASEDIR, '.env'))
+
+UPLOAD_FOLDER = get_key('.env', "UPLOAD_FOLDER")
+DB_LOCATION = get_key('.env', "DB_LOCATION")
+EXTRACTED_FILES_LOCATION = get_key('.env', "EXTRACTED_FILES_LOCATION")
+EXT_DB_LOCATION = get_key('.env', "EXT_DB_LOCATION")
+AI_URL = get_key('.env', "AI_URL")
+
+print(UPLOAD_FOLDER)
+print(DB_LOCATION)
+print(EXTRACTED_FILES_LOCATION)
+print(EXT_DB_LOCATION)
+print(AI_URL)
 
 ALLOWED_EXTENSIONS = {'.zip'}
 
@@ -31,8 +41,9 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def init_db():
-    print("Creating Forensix Database")
     try:
+        print("Creating Forensix Database")
+        
         conn = sqlite3.connect(DB_LOCATION)
         cur = conn.cursor()
         cur.execute(
@@ -67,9 +78,9 @@ def init_db():
         cur.close()
         conn.close()
         print("Database Created")
-
+    
     except Exception as e:
         print(e)
-    
+        
 def get_conn():
     return sqlite3.connect(DB_LOCATION)

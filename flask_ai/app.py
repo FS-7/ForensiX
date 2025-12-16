@@ -1,8 +1,6 @@
 from ai.shared import *
 
 app = Flask(__name__)
-app.config["PORT"] = 5001
-TEMP = "./tmp"
 #app.secret_key = os.getenv("SESSION_KEY")
 cors = CORS(app)
 

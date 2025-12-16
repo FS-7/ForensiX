@@ -7,7 +7,7 @@ cases = Blueprint('cases', __name__, url_prefix='/cases')
 @cases.route('/', methods=["GET"])
 def get_cases():
     print("Request to access all Cases")
-    
+
     results = []
     sql = "SELECT * FROM CRIME_CASES;"
     values = {}

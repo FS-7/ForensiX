@@ -1,13 +1,11 @@
 from forensix.shared import *
 from forensix import auth, internal, cases
-#from asgiref.wsgi import WsgiToAsgi
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SESSION_KEY")
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 cors = CORS(app)
-#asgi_app = WsgiToAsgi(app)
 
 app.register_blueprint(auth.auth)
 app.register_blueprint(internal.internal)
