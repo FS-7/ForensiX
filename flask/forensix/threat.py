@@ -160,7 +160,7 @@ def analyze_text(id):
         ).fetchall()
         
         candidate_labels = [
-            "Normal", "Threat", "Identity Attack", "Sexually Explicit", "Toxicity", "Extremism", "Scam"
+            "Normal", "Threat", "Identity Attack", "Sexually Explicit", "Extremism", "Scam"
         ]
         
         res = defaultdict(str)

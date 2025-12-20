@@ -43,7 +43,7 @@ def init_db():
     try:
         print("Creating Forensix Database")
         
-        conn = sqlite3.connect(DB_LOCATION)
+        conn = sqlite3.connect(f"{DB_LOCATION}/Forensix.db")
         cur = conn.cursor()
         cur.execute(
             '''
