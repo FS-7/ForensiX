@@ -20,7 +20,7 @@ def nlp_query():
     print("User Query...")
     
     data = request.form
-    id = 1#data["id"]
+    id = data["id"]
     query = data['query']
     
     print(query)
@@ -33,8 +33,11 @@ def nlp_query():
     results = run_query(sql_query, id)
     print("Results: ", results)
     
+    tabbed_result = []
+    #results.joins() 
+    
     print("SQL to Table...")
     output = convert_to_nlp(results)
     print("Output: ", output)
-    return make_response(results, 200)
+    return make_response(output, 200)
 

@@ -1,6 +1,5 @@
 from forensix.shared import *
 from forensix.threat import init, extract, add_to_database
-from collections import defaultdict
 
 cases = Blueprint('cases', __name__, url_prefix='/cases')
 
@@ -30,7 +29,7 @@ def get_cases():
         for id, i in enumerate(cursor.execute(sql, values).fetchall()):
             results.append(
                 {
-                    "id": str(id), "caseNumber": i[0], "title": i[1], "description": i[2], "type": i[3], "status": i[4], "severity": i[5], "location": i[6], "dateOccured": i[7], "dateReported": i[8], "assignedOfficer": i[9], "witnesses": i[10], "evidences": evidences[i[0]], "notes": i[11]
+                    "id": str(id), "caseNumber": i[0], "title": i[1], "description": i[2], "type": i[3], "status": i[4], "severity": i[5], "location": i[6], "dateOccured": datetime.strptime(i[7], "%m %d %Y %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S"), "dateReported": i[8], "assignedOfficer": i[9], "witnesses": i[10], "evidences": evidences[i[0]], "notes": i[11]
                 }
             )
         print("Request completed")

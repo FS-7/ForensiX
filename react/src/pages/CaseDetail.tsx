@@ -123,21 +123,27 @@ const CaseDetail = () => {
 
 						{case_.evidences && case_.evidences.length > 0 && (
 							<Card className="p-6">
-								<h2 className="text-xl font-semibold mb-4">Evidences</h2>
-								{
-									case_.evidences.map(evidence => (
-										<div key={evidence[0]} className="flex justify-between py-1">
-											<p className="text-foreground">{evidence[1]}</p>
-											<Link to={`/report/${evidence[0]}`} >
-												<Button size="sm" variant="secondary">
-													View Report
-												</Button>
-											</Link>
-											
-										</div>
-									))
-								}
+								<h2 className="text-xl font-semibold mb-4 flex items-center gap2">
+									<Shield />
+									Evidences
+								</h2>
+								<ul className="space-y-2">
+									{
+										case_.evidences.map(evidence => (
+											<li key={evidence[0]}>
+												<div className="flex justify-between py-1">
+													<p className="text-foreground">{evidence[1]}</p>
+													<Link to={`/report/${evidence[0]}`} >
+														<Button size="sm" variant="secondary">
+															View Report
+														</Button>
+													</Link>
 
+												</div>
+											</li>
+										))
+									}
+								</ul>
 							</Card>
 						)}
 					</div>
@@ -170,7 +176,7 @@ const CaseDetail = () => {
 										<span className="text-sm font-medium">Date Occurred</span>
 									</div>
 									<p className="text-foreground">
-										{new Date(case_.dateOccurred).toLocaleDateString('en-US', {
+										{new Date(`${case_.dateOccurred}2025 00:00:00.0000`).toLocaleDateString('en-US', {
 											year: 'numeric',
 											month: 'long',
 											day: 'numeric'

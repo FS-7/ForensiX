@@ -5,19 +5,10 @@ from werkzeug.utils import secure_filename
 from forensix.parser import *
 
 #   GENERAL UTILITY
-from datetime import datetime
 from collections import defaultdict
 from dotenv import load_dotenv, get_key
 
-import os, hashlib, json, random
-
-#   DATABASE UTILITY
-import sqlite3
-
-#   AI UTILITY
-import torch
-import pandas as pd 
-import numpy as np
+import os, hashlib, random, requests, uuid
 
 BASEDIR = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(BASEDIR, '.env'))
@@ -26,13 +17,21 @@ UPLOAD_FOLDER = get_key('.env', "UPLOAD_FOLDER")
 DB_LOCATION = get_key('.env', "DB_LOCATION")
 EXTRACTED_FILES_LOCATION = get_key('.env', "EXTRACTED_FILES_LOCATION")
 EXT_DB_LOCATION = get_key('.env', "EXT_DB_LOCATION")
-AI_URL = get_key('.env', "AI_URL")
 
+ASR_URL = get_key('.env', "ASR_URL")
+FR_URL = get_key('.env', "FR_URL")
+NLP_URL = get_key('.env', "NLP_URL")
+
+print("File storage location")
 print(UPLOAD_FOLDER)
 print(DB_LOCATION)
 print(EXTRACTED_FILES_LOCATION)
 print(EXT_DB_LOCATION)
-print(AI_URL)
+
+print("\nAI URLs")
+print(ASR_URL)
+print(FR_URL)
+print(NLP_URL)
 
 ALLOWED_EXTENSIONS = {'.zip'}
 
@@ -84,3 +83,38 @@ def init_db():
         
 def get_conn():
     return sqlite3.connect(DB_LOCATION)
+
+
+def ask_whisperx(audio):
+    print("Transcribing audio")
+    
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    payload = {'audio': audio}
+    
+    session = requests.Session()
+    res = session.post(f"{ASR_URL}/", headers=headers, data=payload)
+    return res.text
+
+def ask_fr(image):
+    print("Face recognition")
+    
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    payload = {'image': image}
+    
+    session = requests.Session()
+    res = session.post(f"{FR_URL}/", headers=headers, data=payload)
+    return
+
+def ask_gemma(messages, size):
+    print("Asking Gemma")
+    
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    payload = {'messages': messages, 'new_token_size': size}
+    
+    session = requests.Session()
+    res = session.post(f"{NLP_URL}/", headers=headers, data=payload)
+    
+    if res.status_code == 200:
+        return res.text
+    else:
+        return ""

@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Send, MessageCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import type { CrimeCase } from "@/types/case";
-import { DropdownMenu, DropdownMenuItem } from "./ui/dropdown-menu";
+import { Select, SelectValue, SelectTrigger, SelectContent, SelectItem } from "./ui/select";
 
 interface Message {
   role: "user" | "assistant";
@@ -23,6 +22,11 @@ export const CaseNLPChat = ({ caseData }: CaseNLPChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  var [evidence, setEvidence] = useState(0);
+  
+  if(caseData.evidences.length > 0)
+    var [evidence, setEvidence] = useState(parseInt(caseData.evidences[0][0]));
+  
   
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -32,15 +36,18 @@ export const CaseNLPChat = ({ caseData }: CaseNLPChatProps) => {
     fetch(BACKEND + 'internal/nlp', {
       method: 'POST',
       body: new URLSearchParams({
+        id: evidence.toString(),
         query: input,
       })
     })
-    .then((res) => {res.json().then(r => {
-      const botMessage: Message = { role: "assistant", content: r };
-      setMessages(prev => [...prev, botMessage]);
-      setIsLoading(false);
-    })})
-    .catch((res) => console.log(res))
+      .then((res) => {
+        res.json().then(r => {
+          const botMessage: Message = { role: "assistant", content: r };
+          setMessages(prev => [...prev, botMessage]);
+          setIsLoading(false);
+        })
+      })
+      .catch((res) => console.log(res))
     setMessages(prev => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
@@ -55,12 +62,26 @@ export const CaseNLPChat = ({ caseData }: CaseNLPChatProps) => {
 
   return (
     <Card className="p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <MessageCircle className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-semibold">AI Case Assistant</h2>
-        
-      </div>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2 mb-4">
+          <MessageCircle className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold">AI Case Assistant</h2>
 
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Evidence: </span>
+          <Select value={evidence.toString()} onValueChange={(val) => setEvidence(parseInt(val))}>
+            <SelectTrigger className="w-320 h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background">
+              {caseData.evidences.map((evidence) => (
+                <SelectItem key={evidence[0]} value={evidence[0].toString()}>{evidence[1]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
       <ScrollArea className="h-[400px] mb-4 pr-4">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
@@ -77,8 +98,8 @@ export const CaseNLPChat = ({ caseData }: CaseNLPChatProps) => {
               >
                 <div
                   className={`max-w-[80%] rounded-lg p-3 ${msg.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground"
                     }`}
                 >
                   <p className="text-sm whitespace-pre-wrap">{msg.content}</p>

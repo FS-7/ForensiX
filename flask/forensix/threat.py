@@ -5,6 +5,8 @@ import zipfile
 
 def init(id):
     print("Initializing Evidence Database")
+    os.makedirs(EXT_DB_LOCATION, exist_ok=True)
+
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
         cur = conn.cursor()
@@ -137,30 +139,6 @@ def add_to_database(id):
     except Exception as e:
         print(e)
     return
-
-def ask_whisperx(audio):
-    print("Transcribing audio")
-    
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    payload = {'audio': audio}
-    
-    session = requests.Session()
-    res = session.post(f"{AI_URL}/asr", headers=headers, data=payload)
-    return res.text
-
-def ask_gemma(messages):
-    print("Asking Gemma")
-    
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    payload = {'messages': messages}
-    
-    session = requests.Session()
-    res = session.post(f"{AI_URL}/nlp", headers=headers, data=payload)
-    
-    if res.status_code == 200:
-        return res.text
-    else:
-        return ""
 
 def analyze(id):
     text_outputs = analyze_text(id)
@@ -298,7 +276,7 @@ def generate_query(query):
             Return only SQL, no explanations.
             Query: {query}
         """
-        return ask_gemma(messages)
+        return ask_gemma(messages, 128)
     
     except Exception as e:
         print(e)
@@ -326,5 +304,5 @@ def convert_to_nlp(results):
         
         No Explaination
     """
-    return ask_gemma(messages)
+    return ask_gemma(messages, len(results)*len(results[0]))
     

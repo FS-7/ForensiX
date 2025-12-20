@@ -1,0 +1,5 @@
+--no-index --find-links "file://D:/Repositories/ForensiX/flask_fr/deps"
+dlib
+
+--index "https://pypi.org/simple/"
+face-recognition
