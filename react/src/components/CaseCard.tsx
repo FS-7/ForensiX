@@ -70,7 +70,7 @@ export const CaseCard = ({ case_ }: CaseCardProps) => {
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
             <Calendar className="h-4 w-4" />
-            <span>Reported: {new Date(case_.dateReported).toLocaleDateString()}</span>
+            <span>Reported: {new Date(case_.dateReported).toLocaleDateString('en-IN')}</span>
           </div>
           {case_.assignedOfficer && (
             <div className="flex items-center gap-2 text-muted-foreground">

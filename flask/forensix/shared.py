@@ -81,9 +81,8 @@ def init_db():
     except Exception as e:
         print(e)
         
-def get_conn():
-    return sqlite3.connect(DB_LOCATION)
-
+def get_conn(file):
+    return sqlite3.connect(f"{DB_LOCATION}/{file}")
 
 def ask_whisperx(audio):
     print("Transcribing audio")

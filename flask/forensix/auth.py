@@ -12,25 +12,26 @@ def register():
     password = hashlib.sha512((data["password"] + salt).encode('utf-8')).hexdigest()
     
     try:
+        conn = get_conn()
         cursor = conn.cursor()
-        sql = "INSERT INTO USER(NAME, EMAIL, PHONE, PASSWORD, SALT) VALUES(%(name)s, %(email)s, %(phone)s, %(password)s, %(salt)s);"
-        params = {"name": name, "email": email, "phone": phone, "password": password, "salt": salt}
-        cursor.execute(sql, params=params)
-    except connector.OperationalError as e:
+        sql = "INSERT INTO USER(NAME, EMAIL, PHONE, PASSWORD, SALT) VALUES(?, ?, ?, ?, ?);"
+        params = [name, email, phone, password, salt]
+        cursor.execute(sql, params)
+        cursor.close()
+        conn.commit()
+        
+    except sqlite3.OperationalError as e:
         print(e)
         return make_response("Internal Server Error", 500)
-    except connector.InternalError as e:
+    except sqlite3.InternalError as e:
         print(e)
         return make_response("Internal Server Error", 500)
-    except connector.ProgrammingError as e:
+    except sqlite3.ProgrammingError as e:
         print(e)
         return make_response("Internal Server Error", 500)
     except:
         print(email, password)
         return make_response("Internal Server Error", 500)
-    finally:
-        cursor.close()
-        conn.commit()
     
     return make_response(data, 200)
     
@@ -40,17 +41,18 @@ def login():
     data = request.form
     email = data["email"]
     try:
+        conn = get_conn()
         cursor = conn.cursor()
-        sql = "SELECT SALT FROM USER WHERE EMAIL=%(email)s"
-        params = {"email": email}
-        cursor.execute(sql, params=params)
-    except connector.OperationalError as e:
+        sql = "SELECT SALT FROM USER WHERE EMAIL=?;"
+        params = [email]
+        cursor.execute(sql, params)
+    except sqlite3.OperationalError as e:
         print(e)
         return make_response("Internal Server Error", 500)
-    except connector.InternalError as e:
+    except sqlite3.InternalError as e:
         print(e)
         return make_response("Internal Server Error", 500)
-    except connector.ProgrammingError as e:
+    except sqlite3.ProgrammingError as e:
         print(e)
         return make_response("Internal Server Error", 500)
     except:
@@ -61,23 +63,27 @@ def login():
     password = hashlib.sha512((data["password"] + salt).encode('utf-8')).hexdigest()
     
     try:
-        cursor = conn.cursor(buffered=True)
-        sql = "SELECT COUNT(ID) FROM USER WHERE EMAIL=%(email)s AND PASSWORD=%(password)s;"
-        params = {"email": email, "password": password}
-        cursor.execute(sql, params=params)
-    except connector.OperationalError as e:
+        cursor = conn.cursor()
+        sql = "SELECT PASSWORD FROM USER WHERE EMAIL=?;"
+        params = [email]
+        r = cursor.execute(sql, params).fetchone()[0]
+        cursor.close() 
+        
+        if r==password:
+            return make_response("", 200)
+        else:
+            return make_response("", 200)
+        
+    except sqlite3.OperationalError as e:
         print(e)
         return make_response("Internal Server Error", 500)
-    except connector.InternalError as e:
+    except sqlite3.InternalError as e:
         print(e)
         return make_response("Internal Server Error", 500)
-    except connector.ProgrammingError as e:
+    except sqlite3.ProgrammingError as e:
         print(e)
         return make_response("Internal Server Error", 500)
     except:
         print(email, password)
         return make_response("Internal Server Error", 500)
-    finally:
-        cursor.close()    
         
-    return make_response(data, 200)

@@ -79,9 +79,9 @@ def parseSMS_SQL(loc):
     sms = sqlite3.connect(loc + "sms.db")
     sms_cursor = sms.cursor()
 
-    sms_documents = pd.DataFrame(columns = ["Address", "Body", "Date Sent", "Date Received", "Type", "Seen"])
+    sms_documents = pd.DataFrame(columns = ["Address", "Body", "Date Sent", "Date Received", "Type"])
     for i, c in enumerate(sms_cursor.execute("SELECT * FROM SMS").fetchall()):
-        sms_documents.loc[i] = [ c[2], c[12], datetime.fromtimestamp(int(c[5])/1000).strftime("%d-%m-%Y, %H:%M:%S") if c[9] == 1 else datetime.fromtimestamp(int(c[4])/1000).strftime("%d-%m-%Y, %H:%M:%S"), datetime.fromtimestamp(int(c[4])/1000).strftime("%d-%m-%Y, %H:%M:%S"), "Received" if c[9] == 1 else "Sent", "True" if c[18] == 1 else "False" ]
+        sms_documents.loc[i] = [ c[2], c[12], datetime.fromtimestamp(int(c[5])/1000).strftime("%d-%m-%Y, %H:%M:%S") if c[9] == 1 else datetime.fromtimestamp(int(c[4])/1000).strftime("%d-%m-%Y, %H:%M:%S"), datetime.fromtimestamp(int(c[4])/1000).strftime("%d-%m-%Y, %H:%M:%S"), "Received" if c[9] == 1 else "Sent" ]
 
     return sms_documents
     
@@ -95,7 +95,7 @@ def parseLogsSQL(loc):
     
     return call_log_documents
     
-def scan_files(root="."):
+def scan_files(root):
     entries = []
     for p in Path(root).rglob("*"):
         if p.is_file():
@@ -105,6 +105,7 @@ def scan_files(root="."):
                 "name": p.name,
                 "parent": str(p.parent),
                 "size": stat.st_size,
+                "ctime_readable": datetime.fromtimestamp(int(stat.st_birthtime)//1000).strftime("%d-%m-%Y %H:%M:%S"),
                 "mtime_readable": datetime.fromtimestamp(int(stat.st_mtime)//1000).strftime("%d-%m-%Y %H:%M:%S"),
                 "ext": p.suffix.lower(),
             })

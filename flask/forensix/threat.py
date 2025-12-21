@@ -1,6 +1,5 @@
 from forensix.shared import *
 from forensix.parser import parseContactsCSV, parseSMS_SQL, parseLogsSQL, scan_files
-import requests
 import zipfile
 
 def init(id):
@@ -21,8 +20,7 @@ def init(id):
                 BODY VARCHAR(512) NOT NULL,
                 DATE_SENT DATETIME NOT NULL,
                 DATE_RECEIVED DATETIME NOT NULL,
-                TYPE VARCHAR(10) NOT NULL,
-                SEEN VARCHAR(4) NOT NULL
+                TYPE VARCHAR(10) NOT NULL
             );
             '''
         )
@@ -53,7 +51,8 @@ def init(id):
                 NAME VARCHAR(255) NOT NULL,
                 DIRECTORY VARCHAR(255) NOT NULL,
                 SIZE INT NOT NULL,
-                DATETIME DATETIME NOT NULL,
+                C_DATETIME DATETIME NOT NULL,
+                M_DATETIME DATETIME NOT NULL,
                 EXT VARCHAR(5) NOT NULL
             );
             '''    
@@ -63,12 +62,11 @@ def init(id):
         conn.close()
         print("Evidence Database Created")
         
-        
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
     except:
         print(e)
-    
+
 def extract(filename, id):
     print("Extracting Data")
     
@@ -102,7 +100,7 @@ def add_to_database(id):
         
         cur.executemany(
             '''
-                INSERT INTO MESSAGES(ADDRESS, BODY, DATE_SENT, DATE_RECEIVED, TYPE, SEEN) VALUES(?, ?, ?, ?, ?, ?);
+                INSERT INTO MESSAGES(ADDRESS, BODY, DATE_SENT, DATE_RECEIVED, TYPE) VALUES(?, ?, ?, ?, ?);
             ''',
             sms.values
         )
@@ -127,9 +125,9 @@ def add_to_database(id):
         for file in files:
             cur.execute(
             '''
-                INSERT INTO FILES(PATH, NAME, DIRECTORY, SIZE, DATETIME, EXT) VALUES(?, ?, ?, ?, ?, ?);
+                INSERT INTO FILES(PATH, NAME, DIRECTORY, SIZE, C_DATETIME, M_DATETIME, EXT) VALUES(?, ?, ?, ?, ?, ?, ?);
             ''',
-            [file['path'], file['name'], file['parent'], file['size'], file['mtime_readable'], file['ext']]
+            [file['path'], file['name'], file['parent'], file['size'], file['ctime_readable'], file['mtime_readable'], file['ext']]
         )
         conn.commit()
         cur.close()
@@ -139,6 +137,12 @@ def add_to_database(id):
     except Exception as e:
         print(e)
     return
+
+def extraction(last_id, filename):
+    init(last_id)
+    extract(filename, last_id)
+    add_to_database(last_id)
+    print("Data Extracted and inserted into database")
 
 def analyze(id):
     text_outputs = analyze_text(id)
@@ -233,48 +237,23 @@ def analyze_contacts(id):
     except Exception as e:
         print(e)
     return 
-
+    
 def generate_query(query):
     try:
         messages = f"""
-            Context: You are a SQL generator. 
-            Given the following database schema:
-                Table: Messages
-                Columns:
-                - id (integer)
-                - Address (text)
-                - Date Sent (date)
-                - Date Received (date)
-                - Type (text)
-                - Body (text)
-                - Seen (boolean)
-                
-                Table: Contacts
-                Columns:
-                - id (integer)
-                - name (text)
-                - number (number)
-                - email (text)
-                
-                Table: Call Logs
-                Columns:
-                - id (integer)
-                - Owner (text)
-                - Date Time (number)
-                - Duration (number)
-                - Type (text)
-                
-                Table: Files
-                Columns:
-                - path (text)
-                - name (text)
-                - parent (text)
-                - size (number)
-                - datetime (datetime)
-                - ext (text) alias type
-            Convert the following user question into a correct, safe SQL query. 
-            Return only SQL, no explanations.
-            Query: {query}
+Context: You are a SQL generator. 
+Given the following database schema:
+Table: Messages
+Columns: id (integer) - Address (text) - Date Sent (date) - Date Received (date) - Type (text) - Body (text)
+Table: Contacts
+Columns: id (integer) - name (text) - number (number) - email (text)
+Table: Call Logs
+Columns: id (integer) - Owner (text) - Date Time (number) - Duration (number) - Type (text)
+Table: Files
+Columns: - path (text) - name (text) - parent (text) - size (number) - datetime (datetime) - ext (text) alias type
+Convert the following user question into a correct, safe SQL query. 
+Return only SQL, no explanations.
+Query: {query}
         """
         return ask_gemma(messages, 128)
     
@@ -298,11 +277,10 @@ def run_query(query, id):
     
 def convert_to_nlp(results):
     messages = f"""
-        Structure this data into a table
-        
-        Data: {results}
-        
-        No Explaination
+Structure this data into a table
+Data: {results}
+No Explaination
     """
-    return ask_gemma(messages, len(results)*len(results[0]))
+    print(len(results)*len(results[0]))
+    return ask_gemma(messages, 500)
     

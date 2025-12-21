@@ -176,7 +176,7 @@ const CaseDetail = () => {
 										<span className="text-sm font-medium">Date Occurred</span>
 									</div>
 									<p className="text-foreground">
-										{new Date(`${case_.dateOccurred}2025 00:00:00.0000`).toLocaleDateString('en-US', {
+										{new Date(case_.dateOccured).toLocaleDateString('en-IN', {
 											year: 'numeric',
 											month: 'long',
 											day: 'numeric'
@@ -190,7 +190,7 @@ const CaseDetail = () => {
 										<span className="text-sm font-medium">Date Reported</span>
 									</div>
 									<p className="text-foreground">
-										{new Date(case_.dateReported).toLocaleDateString('en-US', {
+										{new Date(case_.dateReported).toLocaleDateString('en-IN', {
 											year: 'numeric',
 											month: 'long',
 											day: 'numeric'

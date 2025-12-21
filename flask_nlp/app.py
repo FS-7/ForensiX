@@ -40,12 +40,12 @@ def main():
 def checkStatus():
     return make_response(f"NLP Model Ready?:{str(nlp.isLoaded() != None)}", 200)
    
-@app.route('/nlp', methods=["POST"])
+@app.route('/', methods=["POST"])
 def ask_gemma():
     try:
         data = request.form
         query = data["messages"]
-        new_token_size = data["new_token_size"]
+        new_token_size = int(data["new_token_size"])
         messages = [
             {
                 "role": "user", 

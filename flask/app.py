@@ -1,5 +1,5 @@
 from forensix.shared import *
-from forensix import auth, internal, cases
+from forensix import auth, internal, cases, admin
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SESSION_KEY")
@@ -7,6 +7,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 cors = CORS(app)
 
+app.register_blueprint(admin.admin)
 app.register_blueprint(auth.auth)
 app.register_blueprint(internal.internal)
 app.register_blueprint(cases.cases)

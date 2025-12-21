@@ -29,15 +29,25 @@ def nlp_query():
     sql_query = generate_query(query)
     print("SQL:", sql_query)
     
+    if sql_query in [None, ""]:
+        return make_response("Error", 200)
+    
     print("Executing SQL Query")
     results = run_query(sql_query, id)
-    print("Results: ", results)
     
-    tabbed_result = []
-    #results.joins() 
+    if results in [None, ""]:
+        return make_response("Error", 200)
+    
+    tabbed_results = ""
+    val = []
+    for res in results:
+        val.append(' | '.join(res))
+    tabbed_results = ' \n'.join(val)
+    
+    print(tabbed_results)
     
     print("SQL to Table...")
-    output = convert_to_nlp(results)
+    output = ""#convert_to_nlp(tabbed_results)
     print("Output: ", output)
     return make_response(output, 200)
 

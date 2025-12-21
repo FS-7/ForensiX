@@ -1,5 +1,5 @@
 from forensix.shared import *
-from forensix.threat import init, extract, add_to_database
+from forensix.threat import extraction
 
 cases = Blueprint('cases', __name__, url_prefix='/cases')
 
@@ -12,7 +12,7 @@ def get_cases():
     values = {}
     
     try:
-        conn = get_conn()
+        conn = get_conn("Forensix.db")
         cursor = conn.cursor()
         
         evidences = defaultdict(list)
@@ -29,7 +29,7 @@ def get_cases():
         for id, i in enumerate(cursor.execute(sql, values).fetchall()):
             results.append(
                 {
-                    "id": str(id), "caseNumber": i[0], "title": i[1], "description": i[2], "type": i[3], "status": i[4], "severity": i[5], "location": i[6], "dateOccured": datetime.strptime(i[7], "%m %d %Y %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S"), "dateReported": i[8], "assignedOfficer": i[9], "witnesses": i[10], "evidences": evidences[i[0]], "notes": i[11]
+                    "id": str(id), "caseNumber": i[0], "title": i[1], "description": i[2], "type": i[3], "status": i[4], "severity": i[5], "location": i[6], "dateOccured": i[7], "dateReported": i[8], "assignedOfficer": i[9], "witnesses": i[10], "evidences": evidences[i[0]], "notes": i[11]
                 }
             )
         print("Request completed")
@@ -49,7 +49,7 @@ def post_cases():
     print("Adding a case")
     
     def temp(sql, values):
-        conn = get_conn()
+        conn = get_conn("Forensix.db")
         cursor = conn.cursor()
         
         cursor.execute(sql, values)
@@ -72,7 +72,7 @@ def post_cases():
     witnesses = data['witnesses']
     notes = ""
     
-    dateOccurred = datetime.strptime(dateOccurred, "%Y-%m-%d").strftime("%m %d %Y %H:%M:%S")
+    dateOccurred = datetime.strptime(dateOccurred, "%Y-%m-%d").strftime("%Y-%m-%d %H:%M:%S")
     sql = "INSERT INTO CRIME_CASES(CASE_ID, TITLE, DESCRIPTION, TYPE, STATUS, SEVERITY, LOCATION, DATE_OCCURED, DATE_REPORTED, ASSIGNED_OFFICER, WITNESSES, NOTES) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     
     inserted = False
@@ -103,11 +103,11 @@ def delete_cases():
     data = request.form
     id = data['id']
     
-    sql = "DELETE FROM CRIME_CASE WHERE ID=%(id)s;"
-    values = {"id": id}
+    sql = "DELETE FROM CRIME_CASE WHERE ID=?;"
+    values = [id]
     
     try:
-        conn = get_conn()
+        conn = get_conn("Forensix.db")
         cursor = conn.cursor()
         cursor.execute(sql, values)
         return make_response("", 200)
@@ -142,7 +142,7 @@ def post_evidence():
     try:
         sql = "INSERT INTO EVIDENCES(CASE_ID, TITLE, REFERENCE) VALUES (?, ?, ?);"
         values = [case_number, title, filename]
-        conn = get_conn()
+        conn = get_conn("Forensix.db")
         cursor = conn.cursor()
         cursor.execute(sql, values)
         last_id = str(cursor.lastrowid)
@@ -151,13 +151,7 @@ def post_evidence():
         conn.close()
         print("Evidence Added Successfully")
         
-        
-        #   CREATE A FUNCTION THAT EXTRACT ZIP FILE 
-        #   SEND CASE_NUMBER, TITLE, LAST_ROW_ID 
-        init(last_id)
-        extract(filename, last_id)
-        add_to_database(last_id)
-        print("Data Extracted and inserted into database")
+        extraction(last_id, filename)
         
         return make_response("", 200)
     except sqlite3.IntegrityError as e:
