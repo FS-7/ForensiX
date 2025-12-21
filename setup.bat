@@ -20,7 +20,7 @@ cd ..\flask_fr
 virtualenv .venv
 .venv\Scripts\activate.bat
 pip install -r requirements.txt
-pip install face-recognition==1.3.0
+pip install face-recognition==1.3.0 setuptools==80.9.0
 .venv\Scripts\deactivate.bat
 
 cd ..\flask_nlp

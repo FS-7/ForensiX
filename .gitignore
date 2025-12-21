@@ -1,4 +1,4 @@
-Forensix.db
+__pycache__
 .env
 files
 test.ipynb

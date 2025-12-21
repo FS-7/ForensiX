@@ -32,13 +32,9 @@ class NLP:
 
 nlp = NLP(device, dtype)
      
-@app.route('/')
-def main():
-    return make_response("", 200)
-
 @app.route('/checkStatus', methods=["GET"])
 def checkStatus():
-    return make_response(f"NLP Model Ready?:{str(nlp.isLoaded() != None)}", 200)
+    return make_response(f"NLP Model Ready?: {str(nlp.isLoaded() != None)}", 200)
    
 @app.route('/', methods=["POST"])
 def ask_gemma():
