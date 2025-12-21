@@ -1,3 +1,3 @@
 @echo off 
 CALL .venv\Scripts\activate.bat
-flask run --port 5002 --debug
+flask run --port 5002

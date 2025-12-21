@@ -1,6 +1,7 @@
 @echo off 
 
 cd flask_asr
+start runner.bat 
 
 cd ..\flask_fr
 start runner.bat

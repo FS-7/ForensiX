@@ -94,16 +94,6 @@ def ask_whisperx(audio):
     res = session.post(f"{ASR_URL}/", headers=headers, data=payload)
     return res.text
 
-def ask_fr(image):
-    print("Face recognition")
-    
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    payload = {'image': image}
-    
-    session = requests.Session()
-    res = session.post(f"{FR_URL}/", headers=headers, data=payload)
-    return
-
 def ask_gemma(messages, size):
     print("Asking Gemma")
     
@@ -115,5 +105,47 @@ def ask_gemma(messages, size):
     
     if res.status_code == 200:
         return res.text
+    else:
+        return ""
+
+def ask_fr_get_enc(image):
+    print("Face recognition")
+    
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    payload = {'image': image}
+    
+    session = requests.Session()
+    res = session.post(f"{FR_URL}/", headers=headers, data=payload)
+    
+    if res.status_code == 200:
+        return res.content
+    else:
+        return ""
+
+def ask_fr_compare(face_known, face_unknown):
+    print("Face comparision")
+    
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    payload = {'enc_known': face_known, 'enc_unknown': face_unknown}
+
+    session = requests.Session()
+    res = session.post(f"{FR_URL}/similarity", headers=headers, data=payload)
+    
+    if res.status_code == 200:
+        return res.content
+    else:
+        return ""
+
+def ask_fr_compare_list(faces_known, face_unknown):
+    print("Face comparision list")
+    
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    payload = {'enc_known': faces_known, 'enc_unknown': face_unknown}
+    
+    session = requests.Session()
+    res = session.post(f"{FR_URL}/similarity_list", headers=headers, data=payload)
+    
+    if res.status_code == 200:
+        return res.content
     else:
         return ""

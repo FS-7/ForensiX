@@ -146,7 +146,7 @@ def extraction(last_id, filename):
 
 def analyze(id):
     text_outputs = analyze_text(id)
-    #images_outputs = analyze_images(id)
+    images_outputs = analyze_images(id)
     audio_outputs = analyze_audios(id)
     contacts_output = analyze_contacts(id)
     return {"text": text_outputs, "contacts": contacts_output, "audio": audio_outputs}#, "images": images_outputs}
@@ -193,6 +193,13 @@ def analyze_images(id):
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
         cur = conn.cursor()
+        encodings = []
+        
+        results = cur.execute('SELECT PATH FROM FILES WHERE EXT IN [JPG, JPEG, PNG];').fetchall()
+        for res in results:
+            encodings.append(ask_fr_get_enc(res[0]))
+            
+        #similarities = ask_fr_compare_list(, encodings[1])
         print("Analyzed Images")
        
     except Exception as e:
