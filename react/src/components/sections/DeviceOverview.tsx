@@ -12,7 +12,22 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
-export function DeviceOverview() {
+export interface DeviceMetadata {
+  model: string;
+  manufacturer: string;
+  os: string;
+  osVersion: string;
+  serialNumber: string;
+  imei: string;
+  storage: { used: number; total: number };
+  ram: { used: number; total: number };
+  battery: number;
+  lastSync: string;
+  ipAddress: string;
+  macAddress: string;
+}
+
+export function DeviceOverview({report}) {
   const storagePercent = (deviceMetadata.storage.used / deviceMetadata.storage.total) * 100;
   const ramPercent = (deviceMetadata.ram.used / deviceMetadata.ram.total) * 100;
   

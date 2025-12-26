@@ -151,7 +151,7 @@ def post_evidence():
         conn.close()
         print("Evidence Added Successfully")
         
-        extraction(last_id, filename)
+        extraction(last_id, filename, case_number)
         
         return make_response("", 200)
     except sqlite3.IntegrityError as e:

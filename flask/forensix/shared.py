@@ -3,6 +3,7 @@ from flask import Flask, Blueprint, request, make_response, session
 from flask_cors import CORS, cross_origin
 from werkzeug.utils import secure_filename
 from forensix.parser import *
+from pymongo import MongoClient
 
 #   GENERAL UTILITY
 from collections import defaultdict
@@ -21,17 +22,23 @@ EXT_DB_LOCATION = get_key('.env', "EXT_DB_LOCATION")
 ASR_URL = get_key('.env', "ASR_URL")
 FR_URL = get_key('.env', "FR_URL")
 NLP_URL = get_key('.env', "NLP_URL")
+MONGO_HOST = get_key('.env', "MONGO_HOST")
+MONGO_PORT = get_key('.env', "MONGO_PORT")
 
 print("File storage location")
 print(UPLOAD_FOLDER)
 print(DB_LOCATION)
 print(EXTRACTED_FILES_LOCATION)
 print(EXT_DB_LOCATION)
+print(MONGO_HOST)
+print(MONGO_PORT)
 
 print("\nAI URLs")
 print(ASR_URL)
 print(FR_URL)
 print(NLP_URL)
+
+client = MongoClient(host=MONGO_HOST, port=int(MONGO_PORT))["Forensix"]
 
 ALLOWED_EXTENSIONS = {'.zip'}
 
@@ -108,11 +115,11 @@ def ask_gemma(messages, size):
     else:
         return ""
 
-def ask_fr_get_enc(image):
+def ask_fr_get_enc(image, evidence, case_id):
     print("Face recognition")
     
     headers = {'User-Agent': 'Mozilla/5.0'}
-    payload = {'image': image}
+    payload = {'image': image, 'evidence': evidence, 'case_id': case_id}
     
     session = requests.Session()
     res = session.post(f"{FR_URL}/", headers=headers, data=payload)
@@ -120,6 +127,7 @@ def ask_fr_get_enc(image):
     if res.status_code == 200:
         return res.content
     else:
+        print(res.content)
         return ""
 
 def ask_fr_compare(face_known, face_unknown):
@@ -134,6 +142,7 @@ def ask_fr_compare(face_known, face_unknown):
     if res.status_code == 200:
         return res.content
     else:
+        print(res.content)
         return ""
 
 def ask_fr_compare_list(faces_known, face_unknown):
@@ -148,4 +157,5 @@ def ask_fr_compare_list(faces_known, face_unknown):
     if res.status_code == 200:
         return res.content
     else:
+        print(res.content)
         return ""

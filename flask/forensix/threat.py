@@ -138,26 +138,34 @@ def add_to_database(id):
         print(e)
     return
 
-def extraction(last_id, filename):
+def extraction(last_id, filename, case_id):
     init(last_id)
     extract(filename, last_id)
     add_to_database(last_id)
+    analyze(last_id, case_id)
     print("Data Extracted and inserted into database")
 
-def analyze(id):
-    text_outputs = analyze_text(id)
-    images_outputs = analyze_images(id)
-    audio_outputs = analyze_audios(id)
-    contacts_output = analyze_contacts(id)
-    return {"text": text_outputs, "contacts": contacts_output, "audio": audio_outputs}#, "images": images_outputs}
-
-def analyze_text(id):
+def analyze(id, case_id):
+    document = {
+        "Case_id": case_id, "Evidence": id, 
+        "Messages": analyze_text_messages(id),
+        "Contacts": analyze_contacts(id),
+        "Call_logs": analyze_call_logs(id),
+        "Images": analyze_images(id, case_id),
+        "Audios": analyze_audios(id)
+    }
+    try:
+        client["Evidence_report"].insert_one(document)
+    except Exception as e:
+        print(e)
+        
+def analyze_text_messages(id):
     print("Analyzing Text messages")
     
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
         cur = conn.cursor()
-        sms = cur.execute(
+        results = cur.execute(
             '''
                 SELECT * FROM MESSAGES;
             '''
@@ -167,20 +175,25 @@ def analyze_text(id):
             "Normal", "Threat", "Identity Attack", "Sexually Explicit", "Extremism", "Scam"
         ]
         
-        res = defaultdict(str)
-        output = defaultdict(str)
+        output = []
+        for i in set(r[0] for r in results):
+            temp = []
+            for res in results:
+                if res[0] == i:
+                    temp.append({"Content": res[1], "DateSent": res[2], "DateReceived": res[3], "Type": res[4]})
+            output.append({"Number": i, "Messages": temp, "Tags": []})
         
-        for i in sms:
-            res[i[0]] = res[i[0]] + ("Sender: " if i[4] == "Sent" else "Receiver: ") + i[1] + " "    
-        
-        for k in res.keys():
-            print(k)
+        for k in output:
+            msg = ""
+            for i in k["Messages"]:
+                msg += ("Sender: " if i["Type"] == "Sent" else "Receiver: ") + i["Content"] + " "
+                
             messages = f"""
-                Text: {res[k]}.
-                Query: In one word classify the text into one of the following categories: {', '.join(candidate_labels)}. No explaination.
-            """
-            output[k] = ask_gemma(messages)
-        
+                    Text: {msg}.
+                    Query: In one word classify the text into one of the following categories: {', '.join(candidate_labels)}. No explaination.
+                """
+            k["Tags"].append(ask_gemma(messages, 64))
+            
         print("Done")
         return output
         
@@ -188,19 +201,71 @@ def analyze_text(id):
         print(e)
     return 
     
-def analyze_images(id):
+def analyze_contacts(id):
+    print("Analyzing Contacts")
+    try:
+        conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
+        cur = conn.cursor()
+        results = cur.execute(
+            '''
+                SELECT * FROM CONTACTS;
+            '''
+        ).fetchall()
+        
+        output = [] 
+        for i in set(r[2] for r in results):
+            print(i)
+            temp = []
+            for res in results:    
+                if i==res[2]:
+                    temp.append({"Name": res[0], "Number": res[1], "Email": res[3]})
+            output.append({ "Group": i, "Contacts": temp, "Tags": []})
+            
+        print("Analyzed Contacts")
+        return output
+    except Exception as e:
+        print(e)
+    return 
+
+def analyze_call_logs(id):
+    print("Analyzing Call Logs")
+    try:
+        conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
+        cur = conn.cursor()
+        results = cur.execute(
+            '''
+                SELECT * FROM CALL_LOGS;
+            '''
+        ).fetchall()
+        
+        output = []
+        for i in set(r[0] for r in results):
+            temp = []
+            for res in results:
+                if i == res[0]:
+                    temp.append({"Datetime": res[1], "Duration": res[2], "Type": res[3]})
+            output.append({"Number": i, "Call_logs": temp, "Tags": []})
+        
+        print("Analyzed Call Logs")
+        return output
+    except Exception as e:
+        print(e)
+    return 
+
+def analyze_images(id, case_id):
     print("Analyzing Images")
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
         cur = conn.cursor()
-        encodings = []
         
-        results = cur.execute('SELECT PATH FROM FILES WHERE EXT IN [JPG, JPEG, PNG];').fetchall()
+        output = []
+        results = cur.execute('SELECT PATH FROM FILES WHERE EXT IN (".jpg", ".jpeg", ".png");').fetchall()
         for res in results:
-            encodings.append(ask_fr_get_enc(res[0]))
+            output.append((res[0], ask_fr_get_enc(res[0], id, case_id)))
             
         #similarities = ask_fr_compare_list(, encodings[1])
         print("Analyzed Images")
+        return output
        
     except Exception as e:
         print(e)
@@ -225,22 +290,6 @@ def analyze_audios(id):
         print("Analyzed Audio files")
         return results
     
-    except Exception as e:
-        print(e)
-    return 
-
-def analyze_contacts(id):
-    print("Analyzing Images")
-    try:
-        conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
-        cur = conn.cursor()
-        results = cur.execute(
-            '''
-                SELECT NUMBER FROM CALL_LOGS ORDER BY DATE LIMIT 5;
-            '''
-        ).fetchall()
-        print("Analyzed Contacts")
-        return results
     except Exception as e:
         print(e)
     return 

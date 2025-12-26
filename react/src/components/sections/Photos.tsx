@@ -7,7 +7,22 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Calendar, MapPin } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
-export function Photos() {
+export interface Photo {
+  id: string;
+  name: string;
+  url: string;
+  dateTaken: string;
+  faces: string[];
+  location?: string;
+}
+
+export interface FaceGroup {
+  id: string;
+  name: string;
+  photoCount: number;
+}
+
+export function Photos({report}) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFace, setSelectedFace] = useState<string>("all");
 

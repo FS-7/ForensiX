@@ -7,13 +7,12 @@ internal = Blueprint('internal', __name__, url_prefix='/internal')
 def internal_index():
     return make_response("Internal", 200)
 
-@internal.route('/generateReport/<int:id>', methods=["GET"])
+@internal.route('/report/<int:id>', methods=["GET"])
 def generate_report(id):
     print("Generating Report...")
-    response = analyze(id)
-    print(response)
+    response = client["Evidence_report"].find({"Evidence": f"{id}"}, {"_id": 0})
     print("Report Generated")
-    return make_response(response, 200)
+    return make_response(response.to_list(), 200)
 
 @internal.route('/nlp', methods=["POST"])
 def nlp_query():

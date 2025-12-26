@@ -39,7 +39,16 @@ const fileTypeColors = {
   other: "text-gray-400",
 };
 
-export function Files() {
+export interface DeviceFile {
+  id: string;
+  name: string;
+  type: 'image' | 'video' | 'audio' | 'document' | 'archive' | 'other';
+  size: number;
+  path: string;
+  modified: string;
+}
+
+export function Files({report}) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
 

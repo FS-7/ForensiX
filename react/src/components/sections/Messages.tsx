@@ -1,13 +1,33 @@
 import { useState, useMemo } from "react";
-import { textMessages } from "@/data/mockData";
 import { FilterBar } from "@/components/FilterBar";
 import { cn } from "@/lib/utils";
-import { MessageCircle, Send, Circle } from "lucide-react";
+import { MessageCircle, Send, User } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
-export function Messages() {
+export interface TextMessage {
+  Name: string;
+  Number: string;
+  Messages: {
+    Content: string;
+    Type: 'sent' | 'received';
+    DateSent: string;
+    DateReceived: string;
+  }
+  Tags: [];
+}
+
+export function Messages({report}) {
+  //let textMessages = report[0]["Messages"]
+
+  const [textMessages, setTextMessages] = useState(report[0]["Messages"] || [])
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [readFilter, setReadFilter] = useState("all");
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -21,21 +41,19 @@ export function Messages() {
 
   const filteredMessages = useMemo(() => {
     return textMessages.filter((msg) => {
+      console.log(msg)
       const matchesSearch = 
-        msg.contactName.toLowerCase().includes(search.toLowerCase()) ||
-        msg.message.toLowerCase().includes(search.toLowerCase()) ||
-        msg.phoneNumber.includes(search);
+        (msg.Name && msg.Name.toLowerCase().includes(search.toLowerCase())) ||
+        msg.Messages.filter((con) => { return con.Content.toLowerCase().includes(search.toLowerCase()) }) ||
+        msg.Number.includes(search);
       
-      const matchesType = typeFilter === "all" || msg.type === typeFilter;
-      const matchesRead = readFilter === "all" || 
-        (readFilter === "read" && msg.read) || 
-        (readFilter === "unread" && !msg.read);
+      const matchesType = typeFilter === "all" || typeFilter === msg.Messages.Content.Type.toLowerCase();
       
-      return matchesSearch && matchesType && matchesRead;
-    });
-  }, [search, typeFilter, readFilter]);
+      return matchesSearch && matchesType;
+    }); 
+  }, [search, typeFilter]);
 
-  const hasActiveFilters = search !== "" || typeFilter !== "all" || readFilter !== "all";
+  const hasActiveFilters = search !== "" || typeFilter !== "all" ;
 
   return (
     <div className="space-y-6">
@@ -52,7 +70,6 @@ export function Messages() {
         onClearFilters={() => {
           setSearch("");
           setTypeFilter("all");
-          setReadFilter("all");
         }}
         filters={[
           {
@@ -66,63 +83,69 @@ export function Messages() {
               { value: "received", label: "Received" },
             ],
           },
-          {
-            id: "read",
-            label: "Status",
-            value: readFilter,
-            onChange: setReadFilter,
-            options: [
-              { value: "all", label: "All Status" },
-              { value: "read", label: "Read" },
-              { value: "unread", label: "Unread" },
-            ],
-          },
         ]}
       />
 
-      <div className="space-y-3">
-        {filteredMessages.map((msg) => (
-          <div 
-            key={msg.id} 
-            className={cn(
-              "card-gradient rounded-lg border border-border p-4 animate-fade-in",
-              "hover:border-primary/30 transition-colors",
-              !msg.read && "border-l-4 border-l-primary"
-            )}
-          >
-            <div className="flex items-start gap-4">
-              <div className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
-                msg.type === "sent" ? "bg-primary/10" : "bg-secondary"
-              )}>
-                {msg.type === "sent" ? (
-                  <Send className="w-4 h-4 text-primary" />
-                ) : (
-                  <MessageCircle className="w-4 h-4 text-muted-foreground" />
-                )}
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-foreground">{msg.contactName}</span>
-                    {!msg.read && (
-                      <Circle className="w-2 h-2 fill-primary text-primary" />
-                    )}
+      <div className="card-gradient rounded-lg border border-border overflow-hidden animate-fade-in">
+        {filteredMessages.length > 0 ? (
+          <Accordion type="multiple" className="w-full">
+            {filteredMessages.map((message) => (
+              <AccordionItem key={message.Number} value={message.Number} className="border-border">
+                <AccordionTrigger className="px-4 py-3 hover:bg-secondary/50 hover:no-underline">
+                  <div className="flex items-center gap-4 w-full">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <User className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground">{message.Name}</p>
+                      </div>
+                      <p className="text-sm font-mono text-muted-foreground">{message.Number}</p>
+                    </div>
+                    <div className="flex items-center gap-2 mr-4">
+                      <Badge variant="secondary">
+                        {message.Messages.length} message{message.Messages.length !== 1 ? 's' : ''}
+                      </Badge>
+                    </div>
                   </div>
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    {formatDate(msg.timestamp)}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground font-mono mb-2">{msg.phoneNumber}</p>
-                <p className="text-sm text-foreground">{msg.message}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-        
-        {filteredMessages.length === 0 && (
-          <div className="card-gradient rounded-lg border border-border p-8 text-center text-muted-foreground animate-fade-in">
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-3">
+                  <div className="space-y-2 mt-2">
+                    {message.Messages.map((msg, i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          "p-3 rounded-lg border border-border/50",
+                          msg.Type === "sent" ? "bg-primary/5 ml-8" : "bg-secondary/30 mr-8",
+                        )}
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2">
+                            {msg.Type.toLowerCase() === "sent" ? (
+                              <Send className="w-3 h-3 text-primary" />
+                            ) : (
+                              <MessageCircle className="w-3 h-3 text-muted-foreground" />
+                            )}
+                            <span className="text-xs text-muted-foreground capitalize">{msg.Type}</span>
+                            
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(msg.DateSent)}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(msg.DateReceived)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-foreground">{msg.Content}</p>
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        ) : (
+          <div className="p-8 text-center text-muted-foreground">
             No messages found matching your filters.
           </div>
         )}

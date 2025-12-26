@@ -1,10 +1,19 @@
 import { useState, useMemo } from "react";
 import { contacts } from "@/data/mockData";
 import { FilterBar } from "@/components/FilterBar";
-import { cn } from "@/lib/utils";
 import { Star, Mail, Building2, Phone } from "lucide-react";
 
-export function Contacts() {
+export interface Contact {
+  id: string;
+  name: string;
+  phoneNumber: string;
+  email: string;
+  company: string;
+  favorite: boolean;
+  lastContacted: string;
+}
+
+export function Contacts({report}) {
   const [search, setSearch] = useState("");
   const [favoriteFilter, setFavoriteFilter] = useState("all");
 

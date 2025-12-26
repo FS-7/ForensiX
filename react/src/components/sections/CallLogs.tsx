@@ -1,31 +1,40 @@
 import { useState, useMemo } from "react";
-import { callLogs, CallLog } from "@/data/mockData";
 import { FilterBar } from "@/components/FilterBar";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { PhoneIncoming, PhoneOutgoing, PhoneMissed } from "lucide-react";
+import { PhoneIncoming, PhoneOutgoing, PhoneMissed, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const callTypeIcons = {
   incoming: PhoneIncoming,
   outgoing: PhoneOutgoing,
   missed: PhoneMissed,
+  rejected: PhoneMissed
 };
 
 const callTypeColors = {
   incoming: "text-success",
   outgoing: "text-primary",
   missed: "text-destructive",
+  rejected: "text-destructive",
 };
 
-export function CallLogs() {
+export interface CallLog {
+  id: string;
+  Name: string;
+  Number: string;
+  Call_logs: []
+  Tags: []
+}
+
+export function CallLogs({ report }) {
+  const [callLogs, setCallLogs] = useState(report[0]["Call_logs"] || [])
+
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
@@ -41,7 +50,7 @@ export function CallLogs() {
     const date = new Date(dateString);
     const now = new Date();
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return `Today, ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
     if (diffDays === 1) return `Yesterday, ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -49,27 +58,50 @@ export function CallLogs() {
 
   const filteredLogs = useMemo(() => {
     return callLogs.filter((log) => {
-      const matchesSearch = 
-        log.contactName.toLowerCase().includes(search.toLowerCase()) ||
-        log.phoneNumber.includes(search);
-      
-      const matchesType = typeFilter === "all" || log.type === typeFilter;
-      
+      const matchesSearch =
+        (log.Name && log.Name.toLowerCase().includes(search.toLowerCase())) ||
+        log.Number.includes(search);
+
+      const matchesType = typeFilter === "all" || typeFilter === log.Call_logs.Type.toLowerCase();
+
       let matchesDate = true;
       if (dateFilter !== "all") {
-        const logDate = new Date(log.timestamp);
+        const logDate = new Date(log.Call_logs.Datetime);
         const now = new Date();
         const diffDays = Math.floor((now.getTime() - logDate.getTime()) / (1000 * 60 * 60 * 24));
-        
+
         if (dateFilter === "today") matchesDate = diffDays === 0;
         if (dateFilter === "week") matchesDate = diffDays <= 7;
         if (dateFilter === "month") matchesDate = diffDays <= 30;
       }
-      
+
       return matchesSearch && matchesType && matchesDate;
     });
   }, [search, typeFilter, dateFilter]);
 
+  /*
+  const groupedByNumber = useMemo(() => {
+    const groups: Record<string, { Name: string; Number: string; Call_logs: typeof filteredLogs }> = {};
+
+    filteredLogs.forEach((log) => {
+      if (!groups[log.Number]) {
+        groups[log.Number] = {
+          Name: log.Name || "Unknown",
+          Number: log.Number,
+          Call_logs: [],
+        };
+      }
+      groups[log.Number].Call_logs.push(log);
+    });
+
+    return Object.values(groups).sort((a, b) => {
+      const latestA = Math.max(...a.Call_logs.map(l => new Date(l.Call_logs.Datetime).getTime()));
+      const latestB = Math.max(...b.Call_logs.map(l => new Date(l.Call_logs.Datetime).getTime()));
+      return latestB - latestA;
+    });
+  }, [filteredLogs]);
+  */
+  
   const hasActiveFilters = search !== "" || typeFilter !== "all" || dateFilter !== "all";
 
   return (
@@ -100,6 +132,7 @@ export function CallLogs() {
               { value: "incoming", label: "Incoming" },
               { value: "outgoing", label: "Outgoing" },
               { value: "missed", label: "Missed" },
+              { value: "rejected", label: "Rejected" }
             ],
           },
           {
@@ -118,43 +151,58 @@ export function CallLogs() {
       />
 
       <div className="card-gradient rounded-lg border border-border overflow-hidden animate-fade-in">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-border hover:bg-transparent">
-              <TableHead className="text-muted-foreground">Type</TableHead>
-              <TableHead className="text-muted-foreground">Contact</TableHead>
-              <TableHead className="text-muted-foreground">Number</TableHead>
-              <TableHead className="text-muted-foreground">Duration</TableHead>
-              <TableHead className="text-muted-foreground">Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredLogs.map((log) => {
-              const Icon = callTypeIcons[log.type];
-              return (
-                <TableRow key={log.id} className="border-border hover:bg-secondary/50">
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Icon className={cn("w-4 h-4", callTypeColors[log.type])} />
-                      <Badge variant="outline" className={cn(
-                        "text-xs capitalize",
-                        log.type === "missed" && "border-destructive/50 text-destructive"
-                      )}>
-                        {log.type}
-                      </Badge>
+        {filteredLogs.length > 0 ? (
+          <Accordion type="multiple" className="w-full">
+            {filteredLogs.map((log) => (
+              <AccordionItem key={log.Number} value={log.Number} className="border-border">
+                <AccordionTrigger className="px-4 py-3 hover:bg-secondary/50 hover:no-underline">
+                  <div className="flex items-center gap-4 w-full">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Phone className="w-4 h-4 text-primary" />
                     </div>
-                  </TableCell>
-                  <TableCell className="font-medium text-foreground">{log.contactName}</TableCell>
-                  <TableCell className="font-mono text-sm text-muted-foreground">{log.phoneNumber}</TableCell>
-                  <TableCell className="font-mono text-sm">{formatDuration(log.duration)}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{formatDate(log.timestamp)}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-        
-        {filteredLogs.length === 0 && (
+                    <div className="flex-1 text-left">
+                      <p className="font-medium text-foreground">{log.Name || "Unknown" }</p>
+                      <p className="text-sm font-mono text-muted-foreground">{log.Number}</p>
+                    </div>
+                    <Badge variant="secondary" className="mr-4">
+                      {log.Call_logs.length} call{log.Call_logs.length !== 1 ? 's' : ''}
+                    </Badge>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-3">
+                  <div className="space-y-2 mt-2">
+                    {log.Call_logs.map((log, i) => {
+                      const Icon = callTypeIcons[log.Type.toLowerCase()];
+                      return (
+                        <div
+                          key={i}
+                          className="flex items-center gap-4 p-3 rounded-lg bg-secondary/30 border border-border/50"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className={cn("w-4 h-4", callTypeColors[log.Type.toLowerCase()])} />
+                            <Badge variant="outline" className={cn(
+                              "text-xs capitalize",
+                              log.Type === "missed" && "border-destructive/50 text-destructive"
+                            )}>
+                              {log.Type}
+                            </Badge>
+                          </div>
+                          <div className="flex-1" />
+                          <span className="font-mono text-sm text-muted-foreground">
+                            {formatDuration(log.Duration)}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {formatDate(log.Datetime)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        ) : (
           <div className="p-8 text-center text-muted-foreground">
             No call logs found matching your filters.
           </div>
