@@ -72,7 +72,7 @@ def post_cases():
     witnesses = data['witnesses']
     notes = ""
     
-    dateOccurred = datetime.strptime(dateOccurred, "%Y-%m-%d").strftime("%Y-%m-%d %H:%M:%S")
+    dateOccurred = datetime(dateOccurred).isoformat()
     sql = "INSERT INTO CRIME_CASES(CASE_ID, TITLE, DESCRIPTION, TYPE, STATUS, SEVERITY, LOCATION, DATE_OCCURED, DATE_REPORTED, ASSIGNED_OFFICER, WITNESSES, NOTES) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     
     inserted = False
@@ -100,6 +100,7 @@ def post_cases():
 
 @cases.route('/', methods=["DELETE"])
 def delete_cases():
+    print("Removing Case")
     data = request.form
     id = data['id']
     
@@ -110,6 +111,7 @@ def delete_cases():
         conn = get_conn("Forensix.db")
         cursor = conn.cursor()
         cursor.execute(sql, values)
+        print("Case Removed Successfully")
         return make_response("", 200)
     
     except Exception as e:
@@ -117,9 +119,9 @@ def delete_cases():
     except:
         print("Error")
         
-    return make_response("", 200)
+    return make_response("Error", 200)
 
-@cases.route('/addEvidence', methods=["POST"])
+@cases.route('/evidence', methods=["POST"])
 def post_evidence():
     print("Adding Evidence...")
     
@@ -162,3 +164,33 @@ def post_evidence():
         print("Error")
     
     return make_response("", 400)
+
+
+@cases.route('/evidence', methods=["DELETE"])
+def delete_evidence():
+    print("Removing Evidence...")
+    
+    data = request.form
+    id = data['id']
+    
+    try:
+        sql = "DELETE FROM EVIDENCES WHERE ID=?;"
+        values = [id]
+        conn = get_conn("Forensix.db")
+        cursor = conn.cursor()
+        cursor.execute(sql, values)
+        cursor.close()
+        conn.commit()
+        conn.close()
+        print("Evidence Removed Successfully")
+        
+        return make_response("Evidence Removed", 200)
+    
+    except sqlite3.IntegrityError as e:
+        return make_response("Integrity Error", 400)
+    except Exception as e:
+        print(e)
+    except:
+        print("Error")
+    
+    return make_response("Error", 400)

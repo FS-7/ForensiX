@@ -11,12 +11,12 @@ import { useParams } from "react-router-dom";
 import NotFound from "./NotFound";
 
 type Section = 'overview' | 'calls' | 'messages' | 'contacts' | 'files' | 'photos';
-const BACKEND = "http://localhost:5000"
+
+const BACKEND = import.meta.env.VITE_BACKEND;
+
 const Report = () => {
-  const [report, setReport] = useState([]);
-
   const { id } = useParams();
-
+  const [report, setReport] = useState([]);
 
   useEffect(() => {
     fetch(BACKEND + '/internal/report/' + id,
@@ -37,7 +37,7 @@ const Report = () => {
 
   console.log(report)
 
-  const [activeSection, setActiveSection] = useState<Section>('overview');
+  const [activeSection, setActiveSection] = useState<Section>('files');
 
   const renderSection = () => {
     switch (activeSection) {

@@ -93,7 +93,7 @@ def add_to_database(id):
         sms = parseSMS_SQL(f"{EXTRACTED_FILES_LOCATION}/{id}/data/")
         call_logs = parseLogsSQL(f"{EXTRACTED_FILES_LOCATION}/{id}/data/")
         contacts = parseContactsCSV(f"{EXTRACTED_FILES_LOCATION}/{id}/data/")
-        files = scan_files(f"{EXTRACTED_FILES_LOCATION}/{id}/data/")
+        files = scan_files(f"{EXTRACTED_FILES_LOCATION}/{id}/storage/", id)
         
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
         cur = conn.cursor()
@@ -151,6 +151,7 @@ def analyze(id, case_id):
         "Messages": analyze_text_messages(id),
         "Contacts": analyze_contacts(id),
         "Call_logs": analyze_call_logs(id),
+        "Files": analyze_files(id),
         "Images": analyze_images(id, case_id),
         "Audios": analyze_audios(id)
     }
@@ -214,7 +215,6 @@ def analyze_contacts(id):
         
         output = [] 
         for i in set(r[2] for r in results):
-            print(i)
             temp = []
             for res in results:    
                 if i==res[2]:
@@ -251,6 +251,23 @@ def analyze_call_logs(id):
     except Exception as e:
         print(e)
     return 
+
+def analyze_files(id):
+    try: 
+        conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
+        cur = conn.cursor()
+        results = cur.execute("SELECT * FROM FILES;").fetchall()
+        
+        output = []
+        for i in results:
+            output.append({"Path": i[0], "Name": i[1], "Directory": i[2], "Size": i[3], "C_TIME": i[4], "M_TIME": i[5], "EXT": i[6], "Summary": ""})
+        return output
+
+    except Exception as e:
+        print(e)
+    except:
+        print("Error") 
+    return
 
 def analyze_images(id, case_id):
     print("Analyzing Images")

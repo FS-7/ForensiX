@@ -16,12 +16,12 @@ def parseSMS_CSV(loc):
             sms[i] = sms[i].transform(lambda x: x.split("=")[1])
         
         sms["Address"] = sms["Address"].replace(regex="^\\+1", value="")
-        sms["Date Sent"] = sms["Date Sent"].transform(lambda x: datetime.fromtimestamp(int(x)//1000).strftime("%d-%m-%Y %H:%M:%S"))
+        sms["Date Sent"] = sms["Date Sent"].transform(lambda x: datetime.fromtimestamp(int(x)//1000).isoformat())
         sms["Type"] = sms["Type"].transform(lambda x: "Received" if x == "1" else "Sent")
         sms["Seen"] = sms["Seen"].transform(lambda x: "True" if x == "1" else "False")
     
         for i in sms.index:
-            sms.at[i, "Date Received"] = sms.at[i, "Date Sent"] if sms.at[i, "Type"] == "Sent" else datetime.fromtimestamp(int(sms.at[i, "Date Received"])//1000).strftime("%d-%m-%Y %H:%M:%S")
+            sms.at[i, "Date Received"] = sms.at[i, "Date Sent"] if sms.at[i, "Type"] == "Sent" else datetime.fromtimestamp(int(sms.at[i, "Date Received"])//1000).isoformat()
         
         return sms
     
@@ -76,37 +76,38 @@ def parseContactsCSV(loc):
         print("Unknown Error")
 
 def parseSMS_SQL(loc):
-    sms = sqlite3.connect(loc + "sms.db")
+    sms = sqlite3.connect(loc + "mmssms.db")
     sms_cursor = sms.cursor()
 
     sms_documents = pd.DataFrame(columns = ["Address", "Body", "Date Sent", "Date Received", "Type"])
     for i, c in enumerate(sms_cursor.execute("SELECT * FROM SMS").fetchall()):
-        sms_documents.loc[i] = [ c[2], c[12], datetime.fromtimestamp(int(c[5])/1000).strftime("%d-%m-%Y, %H:%M:%S") if c[9] == 1 else datetime.fromtimestamp(int(c[4])/1000).strftime("%d-%m-%Y, %H:%M:%S"), datetime.fromtimestamp(int(c[4])/1000).strftime("%d-%m-%Y, %H:%M:%S"), "Received" if c[9] == 1 else "Sent" ]
+        sms_documents.loc[i] = [ c[2], c[12], c[5] if c[9] == 1 else int(c[4]), int(c[4]), "Received" if c[9] == 1 else "Sent" ]
 
     return sms_documents
     
 def parseLogsSQL(loc):    
-    call_logs = sqlite3.connect(loc + "call_log.db")
+    call_logs = sqlite3.connect(loc + "calllog.db")
     call_logs_cursor = call_logs.cursor()
 
     call_log_documents = pd.DataFrame(columns=[["Number", "Time", "Duration", "Type"]])
     for i, c in enumerate(call_logs_cursor.execute("SELECT * FROM CALLS;").fetchall()):
-        call_log_documents.loc[i] = [ c[1], datetime.fromtimestamp(int(c[5])//1000).strftime("%d-%m-%Y %H:%M:%S"), c[6], "INCOMING" if c[8]==1 else "OUTGOING" if c[8] == 2 else "MISSED" if c[8] == 3 else "REJECTED"]
+        call_log_documents.loc[i] = [ c[1], int(c[5]), c[6], "INCOMING" if c[8]==1 else "OUTGOING" if c[8] == 2 else "MISSED" if c[8] == 3 else "REJECTED"]
     
     return call_log_documents
     
-def scan_files(root):
+def scan_files(root, id):
     entries = []
     for p in Path(root).rglob("*"):
         if p.is_file():
             stat = p.stat()
+            print(str(p))
             entries.append({
-                "path": str(p),
+                "path": str(p).removeprefix(f"..\\files\\files\\{id}\\storage\\0"),
                 "name": p.name,
                 "parent": str(p.parent),
                 "size": stat.st_size,
-                "ctime_readable": datetime.fromtimestamp(int(stat.st_birthtime)//1000).strftime("%d-%m-%Y %H:%M:%S"),
-                "mtime_readable": datetime.fromtimestamp(int(stat.st_mtime)//1000).strftime("%d-%m-%Y %H:%M:%S"),
+                "ctime_readable": int(stat.st_birthtime)*1000,
+                "mtime_readable": int(stat.st_mtime)*1000,
                 "ext": p.suffix.lower(),
             })
     return entries

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
-const BACKEND = "http://localhost:5000/";
+const BACKEND = import.meta.env.VITE_BACKEND;
 
 const NewCase = () => {
   const navigate = useNavigate();
@@ -49,7 +49,7 @@ const NewCase = () => {
       });
       return;
     }
-    fetch(BACKEND + "cases", {
+    fetch(BACKEND + "/cases", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",

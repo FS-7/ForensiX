@@ -5,14 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";
 
-const BACKEND = 'http://localhost:5000/'
+const BACKEND = import.meta.env.VITE_BACKEND;
 
 const Cases = () => {
 	const [cases, setCases] = useState([])
 	useEffect(
 		() => {
 			async function getCases() {
-				await fetch(BACKEND + 'cases',
+				await fetch(BACKEND + '/cases',
 
 				)
 				.then(

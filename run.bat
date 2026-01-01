@@ -3,7 +3,7 @@
 cd flask_asr
 start runner.bat 
 
-cd ..\flask_fr
+cd ..\flask_ir
 start runner.bat
 
 cd ..\flask_nlp

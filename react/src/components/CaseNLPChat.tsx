@@ -16,7 +16,7 @@ interface CaseNLPChatProps {
   caseData: CrimeCase;
 }
 
-const BACKEND = 'http://localhost:5000/'
+const BACKEND = import.meta.env.VITE_BACKEND;
 
 export const CaseNLPChat = ({ caseData }: CaseNLPChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -26,7 +26,6 @@ export const CaseNLPChat = ({ caseData }: CaseNLPChatProps) => {
   
   if(caseData.evidences.length > 0)
     var [evidence, setEvidence] = useState(parseInt(caseData.evidences[0][0]));
-  
   
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;

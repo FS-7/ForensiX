@@ -4,13 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { CrimeCase } from "@/types/case";
-import { useNavigate } from "react-router-dom";
+
+const BACKEND = import.meta.env.VITE_BACKEND;
 
 interface CaseCardProps {
     case_: CrimeCase;
 }
-
-const BACKEND = 'http://localhost:5000/'
 
 export const AddEvidence = ({ case_ }: CaseCardProps) => {
     const { toast } = useToast();
@@ -24,7 +23,6 @@ export const AddEvidence = ({ case_ }: CaseCardProps) => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validation
         if (!formData.title) {
             toast({
                 title: "Select Zip file",
@@ -36,11 +34,8 @@ export const AddEvidence = ({ case_ }: CaseCardProps) => {
         form.append('caseNumber', case_.caseNumber);
         form.append('title', formData.title);
 
-        fetch(BACKEND + 'cases/addEvidence', {
+        fetch(BACKEND + 'cases/evidence', {
             method: "POST",
-            headers: {
-                //"Content-Type": "application/zip"
-            },
             body: form
         })
             .then(
@@ -55,7 +50,31 @@ export const AddEvidence = ({ case_ }: CaseCardProps) => {
             )
 
     };
-    
+
+    const handleDelete = (id) => {
+        const form = new URLSearchParams({
+            id: id
+        })
+        fetch(BACKEND + 'cases/evidence', {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: form
+        })
+            .then(
+                () => {
+                    toast({
+                        title: "Evidence Removed Successfully",
+                    });
+                }
+            )
+            .catch(
+                res => console.log(res)
+            )
+
+    }
+
     const handleChange = (field: string, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };

@@ -36,12 +36,11 @@ export function Messages({report}) {
     
     if (diffDays === 0) return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     if (diffDays === 1) return 'Yesterday';
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   const filteredMessages = useMemo(() => {
     return textMessages.filter((msg) => {
-      console.log(msg)
       const matchesSearch = 
         (msg.Name && msg.Name.toLowerCase().includes(search.toLowerCase())) ||
         msg.Messages.filter((con) => { return con.Content.toLowerCase().includes(search.toLowerCase()) }) ||
@@ -130,10 +129,10 @@ export function Messages({report}) {
                             
                           </div>
                           <span className="text-xs text-muted-foreground">
-                            {formatDate(msg.DateSent)}
+                            <p>Date Sent:</p>{formatDate(msg.DateSent)}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {formatDate(msg.DateReceived)}
+                            <p>Date Received:</p>{formatDate(msg.DateReceived)}
                           </span>
                         </div>
                         <p className="text-sm text-foreground">{msg.Content}</p>

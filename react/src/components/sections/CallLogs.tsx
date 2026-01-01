@@ -78,29 +78,6 @@ export function CallLogs({ report }) {
       return matchesSearch && matchesType && matchesDate;
     });
   }, [search, typeFilter, dateFilter]);
-
-  /*
-  const groupedByNumber = useMemo(() => {
-    const groups: Record<string, { Name: string; Number: string; Call_logs: typeof filteredLogs }> = {};
-
-    filteredLogs.forEach((log) => {
-      if (!groups[log.Number]) {
-        groups[log.Number] = {
-          Name: log.Name || "Unknown",
-          Number: log.Number,
-          Call_logs: [],
-        };
-      }
-      groups[log.Number].Call_logs.push(log);
-    });
-
-    return Object.values(groups).sort((a, b) => {
-      const latestA = Math.max(...a.Call_logs.map(l => new Date(l.Call_logs.Datetime).getTime()));
-      const latestB = Math.max(...b.Call_logs.map(l => new Date(l.Call_logs.Datetime).getTime()));
-      return latestB - latestA;
-    });
-  }, [filteredLogs]);
-  */
   
   const hasActiveFilters = search !== "" || typeFilter !== "all" || dateFilter !== "all";
 

@@ -16,7 +16,7 @@ virtualenv .venv
 pip install -r requirements.txt
 .venv\Scripts\deactivate.bat
 
-cd ..\flask_fr
+cd ..\flask_ir
 virtualenv .venv
 .venv\Scripts\activate.bat
 pip install -r requirements.txt

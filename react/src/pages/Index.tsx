@@ -10,7 +10,6 @@ const Index = () => {
       <Navigation />
       
       <main>
-        {/* Hero Section */}
         <section className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground py-20">
           <div className="container mx-auto px-4 text-center">
             <Shield className="h-16 w-16 mx-auto mb-6" />
@@ -36,7 +35,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Features Section */}
         <section className="py-16 container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12 text-foreground">
             Key Features
@@ -65,30 +63,6 @@ const Index = () => {
                 Generate comprehensive reports and gain insights into crime trends, case resolution rates, and department performance.
               </p>
             </Card>
-          </div>
-        </section>
-
-        {/* Stats Section */}
-        <section className="bg-secondary py-16">
-          <div className="container mx-auto px-4">
-            <div className="grid md:grid-cols-4 gap-8 text-center">
-              <div>
-                <div className="text-4xl font-bold text-primary mb-2">156</div>
-                <div className="text-muted-foreground">Active Cases</div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold text-success mb-2">89</div>
-                <div className="text-muted-foreground">Solved This Month</div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold text-warning mb-2">24</div>
-                <div className="text-muted-foreground">Under Investigation</div>
-              </div>
-              <div>
-                <div className="text-4xl font-bold text-info mb-2">98%</div>
-                <div className="text-muted-foreground">Resolution Rate</div>
-              </div>
-            </div>
           </div>
         </section>
       </main>

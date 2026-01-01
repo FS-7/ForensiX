@@ -8,7 +8,7 @@ import { CaseNLPChat } from "@/components/CaseNLPChat";
 import { useEffect, useState } from "react";
 import { AddEvidence } from "@/components/AddEvidence";
 
-const BACKEND = 'http://localhost:5000/'
+const BACKEND = import.meta.env.VITE_BACKEND;
 
 const CaseDetail = () => {
 	const { id } = useParams();
@@ -16,7 +16,7 @@ const CaseDetail = () => {
 	useEffect(
 		() => {
 			async function getCases() {
-				await fetch(BACKEND + 'cases',
+				await fetch(BACKEND + '/cases',
 
 				)
 					.then(

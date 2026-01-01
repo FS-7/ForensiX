@@ -41,21 +41,24 @@ const fileTypeColors = {
 
 export interface DeviceFile {
   id: string;
-  name: string;
+  Name: string;
   type: 'image' | 'video' | 'audio' | 'document' | 'archive' | 'other';
-  size: number;
-  path: string;
-  modified: string;
+  Size: number;
+  Path: string;
+  C_TIME: string;
+  M_TIME: string;
 }
 
 export function Files({report}) {
+  const [files, setFiles] = useState(report[0]["Files"] || [])
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
 
   const formatSize = (sizeMB: number) => {
-    if (sizeMB < 1) return `${(sizeMB * 1024).toFixed(0)} KB`;
-    if (sizeMB >= 1024) return `${(sizeMB / 1024).toFixed(2)} GB`;
-    return `${sizeMB.toFixed(1)} MB`;
+    if (sizeMB >= 1024 * 1024 * 1024) return `${(sizeMB / (1024 * 1024 * 1024)).toFixed(0)} GB`;
+    if (sizeMB >= 1024 * 1024) return `${(sizeMB / (1024 * 1024)).toFixed(2)} MB`;
+    if (sizeMB >= 1024) return `${(sizeMB / 1024).toFixed(2)} KB`;
+    return `${sizeMB.toFixed(1)} B`;
   };
 
   const formatDate = (dateString: string) => {
@@ -67,10 +70,10 @@ export function Files({report}) {
   };
 
   const filteredFiles = useMemo(() => {
-    return deviceFiles.filter((file) => {
+    return files.filter((file) => {
       const matchesSearch = 
-        file.name.toLowerCase().includes(search.toLowerCase()) ||
-        file.path.toLowerCase().includes(search.toLowerCase());
+        file.Name.toLowerCase().includes(search.toLowerCase()) ||
+        file.Path.toLowerCase().includes(search.toLowerCase());
       
       const matchesType = typeFilter === "all" || file.type === typeFilter;
       
@@ -80,8 +83,7 @@ export function Files({report}) {
 
   const hasActiveFilters = search !== "" || typeFilter !== "all";
 
-  // Calculate stats
-  const totalSize = deviceFiles.reduce((acc, file) => acc + file.size, 0);
+  const totalSize = files.reduce((acc, file) => acc + file.size, 0);
   const typeStats = deviceFiles.reduce((acc, file) => {
     acc[file.type] = (acc[file.type] || 0) + 1;
     return acc;
@@ -94,7 +96,6 @@ export function Files({report}) {
         <p className="text-muted-foreground">Browse and filter device files</p>
       </div>
 
-      {/* File Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
         {Object.entries(fileTypeIcons).map(([type, Icon]) => (
           <button
@@ -150,19 +151,19 @@ export function Files({report}) {
               <TableHead className="text-muted-foreground">Type</TableHead>
               <TableHead className="text-muted-foreground">Size</TableHead>
               <TableHead className="text-muted-foreground">Path</TableHead>
+              <TableHead className="text-muted-foreground">Created</TableHead>
               <TableHead className="text-muted-foreground">Modified</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredFiles.map((file) => {
+            {filteredFiles.map((file, i) => {
               const Icon = fileTypeIcons[file.type];
               return (
-                <TableRow key={file.id} className="border-border hover:bg-secondary/50">
+                <TableRow key={i} className="border-border hover:bg-secondary/50">
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <Icon className={cn("w-5 h-5", fileTypeColors[file.type])} />
                       <span className="font-medium text-foreground truncate max-w-[200px]">
-                        {file.name}
+                        {file.Name}
                       </span>
                     </div>
                   </TableCell>
@@ -171,15 +172,18 @@ export function Files({report}) {
                       {file.type}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-mono text-sm">{formatSize(file.size)}</TableCell>
+                  <TableCell className="font-mono text-sm">{formatSize(file.Size)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Folder className="w-4 h-4" />
-                      <span className="truncate max-w-[150px]">{file.path}</span>
+                      <span className="truncate max-w-[150px]">{file.Path}</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(file.modified)}
+                    {formatDate(file.C_TIME)}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {formatDate(file.M_TIME)}
                   </TableCell>
                 </TableRow>
               );
@@ -195,7 +199,7 @@ export function Files({report}) {
       </div>
 
       <div className="text-sm text-muted-foreground text-right">
-        Total: {filteredFiles.length} files • {formatSize(filteredFiles.reduce((acc, f) => acc + f.size, 0))}
+        Total: {filteredFiles.length} files • {formatSize(totalSize)}
       </div>
     </div>
   );

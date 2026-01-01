@@ -1,44 +1,32 @@
 import { useState, useMemo } from "react";
 import { contacts } from "@/data/mockData";
 import { FilterBar } from "@/components/FilterBar";
-import { Star, Mail, Building2, Phone } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 
 export interface Contact {
   id: string;
-  name: string;
-  phoneNumber: string;
-  email: string;
-  company: string;
-  favorite: boolean;
-  lastContacted: string;
+  Name: string;
+  Number: string;
+  Email: string;
 }
 
-export function Contacts({report}) {
+export function Contacts({ report }) {
+  const [contacts, setContacts] = useState(report[0]["Contacts"] || [])
   const [search, setSearch] = useState("");
-  const [favoriteFilter, setFavoriteFilter] = useState("all");
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
 
   const filteredContacts = useMemo(() => {
     return contacts.filter((contact) => {
-      const matchesSearch = 
-        contact.name.toLowerCase().includes(search.toLowerCase()) ||
-        contact.email.toLowerCase().includes(search.toLowerCase()) ||
-        contact.phoneNumber.includes(search) ||
-        contact.company.toLowerCase().includes(search.toLowerCase());
-      
-      const matchesFavorite = favoriteFilter === "all" || 
-        (favoriteFilter === "favorites" && contact.favorite) ||
-        (favoriteFilter === "regular" && !contact.favorite);
-      
-      return matchesSearch && matchesFavorite;
-    });
-  }, [search, favoriteFilter]);
+      console.log("{}", contact.Contacts)
+      const matchesSearch =
+        contact.Contacts[0].Name.toLowerCase().includes(search.toLowerCase()) ||
+        contact.Contacts[0].Email.toLowerCase().includes(search.toLowerCase()) ||
+        contact.Contacts[0].Number.includes(search)
 
-  const hasActiveFilters = search !== "" || favoriteFilter !== "all";
+      return matchesSearch;
+    });
+  }, [search]);
+
+  const hasActiveFilters = search !== "";
 
   return (
     <div className="space-y-6">
@@ -54,73 +42,49 @@ export function Contacts({report}) {
         hasActiveFilters={hasActiveFilters}
         onClearFilters={() => {
           setSearch("");
-          setFavoriteFilter("all");
         }}
-        filters={[
-          {
-            id: "favorite",
-            label: "Filter",
-            value: favoriteFilter,
-            onChange: setFavoriteFilter,
-            options: [
-              { value: "all", label: "All Contacts" },
-              { value: "favorites", label: "Favorites" },
-              { value: "regular", label: "Regular" },
-            ],
-          },
-        ]}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredContacts.map((contact) => (
-          <div 
-            key={contact.id} 
+        {filteredContacts.map((contact, i) => (
+          <div
+            key={i}
             className="card-gradient rounded-lg border border-border p-5 animate-fade-in hover:border-primary/30 transition-colors"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
                   <span className="text-lg font-semibold text-primary">
-                    {contact.name.charAt(0)}
+                    {contact.Contacts[0].Name.charAt(0)}
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-medium text-foreground">{contact.name}</h3>
-                  {contact.company && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Building2 className="w-3 h-3" />
-                      {contact.company}
+                  <h3 className="font-medium text-foreground">{contact.Contacts[0].Name}</h3>
+                </div>
+              </div>
+            </div>
+            {
+              contact.Contacts.map((cont, i) => (
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <span className="font-mono text-foreground">{cont.Number}</span>
+                  </div>
+                  {contact.Contacts[0].Email && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground truncate">{cont.Email}</span>
                     </div>
                   )}
                 </div>
-              </div>
-              {contact.favorite && (
-                <Star className="w-5 h-5 fill-warning text-warning" />
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Phone className="w-4 h-4 text-muted-foreground" />
-                <span className="font-mono text-foreground">{contact.phoneNumber}</span>
-              </div>
-              {contact.email && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Mail className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground truncate">{contact.email}</span>
-                </div>
-              )}
-            </div>
-            
-            <div className="mt-4 pt-3 border-t border-border">
-              <p className="text-xs text-muted-foreground">
-                Last contacted: {formatDate(contact.lastContacted)}
-              </p>
-            </div>
+
+              ))
+            }
           </div>
         ))}
       </div>
-      
+
       {filteredContacts.length === 0 && (
         <div className="card-gradient rounded-lg border border-border p-8 text-center text-muted-foreground animate-fade-in">
           No contacts found matching your filters.

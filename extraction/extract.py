@@ -11,8 +11,6 @@ for i, device in enumerate(devices):
 i = int(input("Select a device: "))
 device = devices[i]
 
-device.shell("mkdir /storage/emulated/0/data")
-
 files = [
     "com.android.providers.telephony/databases/mmssms.db", 
     "com.android.providers.contacts/databases/calllog.db", 
@@ -35,19 +33,23 @@ def check_root_status(device):
         else:
             print(f"An unexpected error occurred: {e}")
             return False
-        
+     
+os.makedirs("output\\device", exist_ok=True)
+os.makedirs("output\\device\\data", exist_ok=True)
+os.makedirs("output\\device\\storage", exist_ok=True)
+
+os.system(f"adb\\adb shell content query --uri content://sms > output/device/data/sms.csv")
+os.system(f"adb\\adb shell content query --uri content://call_log/calls > output/device/data/call_logs.csv")
+os.system(f"adb\\adb shell content query --uri content://contacts/phones/ > output/device/data/contacts.csv")
+
 if(check_root_status(device)):
     try:
         for file in files:
-            device.shell(f"cp /data/data/{file} /storage/emulated/0/data")
+            os.system(f"adb\\adb pull /data/data/{file} output/device/data")
+            #device.shell(f"cp /data/data/{file} /storage/emulated/0/data")
     except Exception as e:
         print(e)
 
-device.shell("content query --uri content://sms > /storage/emulated/0/data/sms.csv")
-device.shell("content query --uri content://call_log/calls > /storage/emulated/0/data/call_logs.csv")
-device.shell("content query --uri content://contacts/phones/ > /storage/emulated/0/data/contacts.csv")
+os.system("adb\\adb pull storage/emulated/0/ output/device/storage")
 
-os.makedirs("output", exist_ok=True)
-os.system("adb\\adb pull storage/emulated/0/ output/device/")
-
-shutil.make_archive('output/zip/device', 'zip', 'output/device/0') 
+shutil.make_archive('output/device', 'zip', 'output/device/') 
