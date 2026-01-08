@@ -9,6 +9,7 @@ import CaseDetail from "./pages/CaseDetail";
 import NewCase from "./pages/NewCase";
 import NotFound from "./pages/NotFound";
 import Report from "./pages/Report";
+import { CaseNLPChat } from "./pages/NLP";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/cases/:id" element={<CaseDetail />} />
           <Route path="/new-case" element={<NewCase />} />
           <Route path="/report/:id" element={<Report />} />
+          <Route path="/nlp" element={<CaseNLPChat />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

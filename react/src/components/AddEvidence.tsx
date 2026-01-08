@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { CrimeCase } from "@/types/case";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 const BACKEND = import.meta.env.VITE_BACKEND;
 
@@ -15,24 +16,31 @@ export const AddEvidence = ({ case_ }: CaseCardProps) => {
     const { toast } = useToast();
 
     const [formData, setFormData] = useState({
-        case_id: "",
-        title: "",
+        case_id: case_.caseNumber,
+        type: "",
         file: ""
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.title) {
+        if (!formData.file) {
             toast({
                 title: "Select Zip file",
             });
             return;
         }
 
+        if (!formData.type) {
+            toast({
+                title: "Select Type",
+            });
+            return;
+        }
+
         const form = new FormData(e.target);
-        form.append('caseNumber', case_.caseNumber);
-        form.append('title', formData.title);
+        form.append('caseNumber', formData.case_id);
+        form.append('type', formData.type);
 
         fetch(BACKEND + 'cases/evidence', {
             method: "POST",
@@ -77,18 +85,26 @@ export const AddEvidence = ({ case_ }: CaseCardProps) => {
 
     const handleChange = (field: string, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
+        
     };
 
     return (
         <form id="form" className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
                 <Label htmlFor="file">Add Evidence</Label>
-                <Input
-                    id="title"
-                    placeholder="Name"
-                    onChange={(e) => handleChange("title", e.target.value)}
+                <Select
+                    onValueChange={(val) => handleChange("type", val)}
                     required
-                />
+                >
+                    <SelectTrigger>
+                        <SelectValue placeholder="Type of Evidence" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="device">Device Data</SelectItem>
+                        <SelectItem value="forensic">Forensic Evidence</SelectItem>
+                        <SelectItem value="footage">Security Footage</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="file">Add Evidence File</Label>

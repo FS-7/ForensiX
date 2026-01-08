@@ -1,14 +1,11 @@
 import { useState, useMemo } from "react";
-import { deviceFiles } from "@/data/mockData";
 import { FilterBar } from "@/components/FilterBar";
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { 
   Image, 
   Video, 
@@ -40,25 +37,27 @@ const fileTypeColors = {
 };
 
 export interface DeviceFile {
-  id: string;
+  //id: string;
   Name: string;
-  type: 'image' | 'video' | 'audio' | 'document' | 'archive' | 'other';
+  Type: 'image' | 'video' | 'audio' | 'document' | 'archive' | 'other';
   Size: number;
   Path: string;
   C_TIME: string;
   M_TIME: string;
+  Content?: string;
 }
 
-export function Files({report}) {
-  const [files, setFiles] = useState(report[0]["Files"] || [])
+export function Files({ report }) {
+  const [files, setFiles] = useState(report[0]["Files"])
+  
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  const formatSize = (sizeMB: number) => {
-    if (sizeMB >= 1024 * 1024 * 1024) return `${(sizeMB / (1024 * 1024 * 1024)).toFixed(0)} GB`;
-    if (sizeMB >= 1024 * 1024) return `${(sizeMB / (1024 * 1024)).toFixed(2)} MB`;
-    if (sizeMB >= 1024) return `${(sizeMB / 1024).toFixed(2)} KB`;
-    return `${sizeMB.toFixed(1)} B`;
+  const formatSize = (size: number) => {
+    if (size >= (1024 * 1024 * 1024)) return `${(size * (1024 * 1024 * 1024)).toFixed(0)} GB`;
+    if (size >= (1024 * 1024)) return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+    if (size >= (1024)) return `${(size / 1024).toFixed(2)} KB`;
+    return `${size.toFixed(1)} B`;
   };
 
   const formatDate = (dateString: string) => {
@@ -75,19 +74,11 @@ export function Files({report}) {
         file.Name.toLowerCase().includes(search.toLowerCase()) ||
         file.Path.toLowerCase().includes(search.toLowerCase());
       
-      const matchesType = typeFilter === "all" || file.type === typeFilter;
+      const matchesType = typeFilter === "all" || file.Type === typeFilter;
       
       return matchesSearch && matchesType;
     });
   }, [search, typeFilter]);
-
-  const hasActiveFilters = search !== "" || typeFilter !== "all";
-
-  const totalSize = files.reduce((acc, file) => acc + file.size, 0);
-  const typeStats = deviceFiles.reduce((acc, file) => {
-    acc[file.type] = (acc[file.type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
 
   return (
     <div className="space-y-6">
@@ -96,102 +87,55 @@ export function Files({report}) {
         <p className="text-muted-foreground">Browse and filter device files</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-        {Object.entries(fileTypeIcons).map(([type, Icon]) => (
-          <button
-            key={type}
-            onClick={() => setTypeFilter(typeFilter === type ? "all" : type)}
-            className={cn(
-              "card-gradient rounded-lg border p-3 text-center transition-all",
-              typeFilter === type 
-                ? "border-primary bg-primary/10" 
-                : "border-border hover:border-primary/30"
-            )}
-          >
-            <Icon className={cn("w-5 h-5 mx-auto mb-1", fileTypeColors[type as keyof typeof fileTypeColors])} />
-            <p className="text-xs text-muted-foreground capitalize">{type}</p>
-            <p className="text-sm font-semibold text-foreground">{typeStats[type] || 0}</p>
-          </button>
-        ))}
-      </div>
-
-      <FilterBar
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search files..."
-        hasActiveFilters={hasActiveFilters}
-        onClearFilters={() => {
-          setSearch("");
-          setTypeFilter("all");
-        }}
-        filters={[
-          {
-            id: "type",
-            label: "File Type",
-            value: typeFilter,
-            onChange: setTypeFilter,
-            options: [
-              { value: "all", label: "All Types" },
-              { value: "image", label: "Images" },
-              { value: "video", label: "Videos" },
-              { value: "audio", label: "Audio" },
-              { value: "document", label: "Documents" },
-              { value: "archive", label: "Archives" },
-              { value: "other", label: "Other" },
-            ],
-          },
-        ]}
-      />
-
       <div className="card-gradient rounded-lg border border-border overflow-hidden animate-fade-in">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-border hover:bg-transparent">
-              <TableHead className="text-muted-foreground">Name</TableHead>
-              <TableHead className="text-muted-foreground">Type</TableHead>
-              <TableHead className="text-muted-foreground">Size</TableHead>
-              <TableHead className="text-muted-foreground">Path</TableHead>
-              <TableHead className="text-muted-foreground">Created</TableHead>
-              <TableHead className="text-muted-foreground">Modified</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredFiles.map((file, i) => {
-              const Icon = fileTypeIcons[file.type];
-              return (
-                <TableRow key={i} className="border-border hover:bg-secondary/50">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <span className="font-medium text-foreground truncate max-w-[200px]">
-                        {file.Name}
-                      </span>
+        {filteredFiles.length > 0 ? (
+          <Accordion type="single" collapsible className="w-full">
+            {filteredFiles.map((file) => (
+              <AccordionItem key={file.Path} value={file.Name} className="border-border">
+                <AccordionTrigger className="px-4 py-3 hover:bg-secondary/50">
+                  <div className="flex items-center gap-3 flex-1">
+                    <Folder className="w-5 h-5 text-yellow-400" />
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium text-foreground">{file.Name}</span>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="capitalize text-xs">
-                      {file.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">{formatSize(file.Size)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Folder className="w-4 h-4" />
-                      <span className="truncate max-w-[150px]">{file.Path}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(file.C_TIME)}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(file.M_TIME)}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-        
-        {filteredFiles.length === 0 && (
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="divide-y divide-border">
+                    {files.map((file, i) => {
+                      const Icon = fileTypeIcons[file.Type];
+                      return (
+                        <div
+                          key={i}
+                          className="px-4 py-3 hover:bg-secondary/30 transition-colors"
+                        >
+                          {file.Content && (
+                              <div className="mt-2 p-3 bg-secondary/50 rounded-md border border-border">
+                                <p className="text-xs text-muted-foreground mb-1">Content Preview:</p>
+                                <p className="text-foreground whitespace-pre-wrap">{file.Content}</p>
+                              </div>
+                            )}
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="font-medium text-foreground">{file.Path}</span>
+                            <Badge variant="outline" className="capitalize text-xs ml-auto">
+                              {file.Type}
+                            </Badge>
+                          </div>
+                          <div className="ml-8 text-sm text-muted-foreground space-y-1">
+                            <p>Size: <span className="font-mono">{formatSize(file.Size)}</span></p>
+                            <p>Created: {formatDate(file.C_TIME)}</p>
+                            <p>Modified: {formatDate(file.M_TIME)}</p>
+                            
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        ) : (
           <div className="p-8 text-center text-muted-foreground">
             No files found matching your filters.
           </div>
@@ -199,7 +143,7 @@ export function Files({report}) {
       </div>
 
       <div className="text-sm text-muted-foreground text-right">
-        Total: {filteredFiles.length} files • {formatSize(totalSize)}
+        Total: {filteredFiles.length} files • {formatSize(filteredFiles.reduce((acc, f) => acc + f.Size, 0))}
       </div>
     </div>
   );

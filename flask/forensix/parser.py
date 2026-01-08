@@ -55,7 +55,7 @@ def parseLogsCSV(loc):
 def parseContactsCSV(loc):
     try:
         contacts = pd.read_csv(loc+"contacts.csv", header=None)
-        if contacts.iat[0, 0] == "No result found.":
+        if contacts.iat[0, 0] == "No result found." or contacts.empty:
             return pd.DataFrame()
         contacts = contacts.iloc[:, [16, 1, 2, 8]]
         contacts.columns = ["Name", "Number", "Group", "Email"]
@@ -100,7 +100,6 @@ def scan_files(root, id):
     for p in Path(root).rglob("*"):
         if p.is_file():
             stat = p.stat()
-            print(str(p))
             entries.append({
                 "path": str(p).removeprefix(f"..\\files\\files\\{id}\\storage\\0"),
                 "name": p.name,

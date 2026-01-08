@@ -17,6 +17,15 @@ export const Navigation = () => {
           </Link>
           
           <div className="flex items-center gap-2">
+            <Link to="/nlp">
+              <Button 
+                variant={isActive("/nlp") ? "default" : "ghost"}
+                className="gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Ask Me
+              </Button>
+            </Link>
             <Link to="/cases">
               <Button 
                 variant={isActive("/cases") ? "default" : "ghost"}

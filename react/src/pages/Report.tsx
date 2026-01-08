@@ -37,7 +37,7 @@ const Report = () => {
 
   console.log(report)
 
-  const [activeSection, setActiveSection] = useState<Section>('files');
+  const [activeSection, setActiveSection] = useState<Section>('overview');
 
   const renderSection = () => {
     switch (activeSection) {
@@ -68,7 +68,7 @@ const Report = () => {
       <div className="flex flex-row justify-center h-full">
         <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
         <main className="p-8">
-          <div className="max-w-6xl">
+          <div className="max-w-6xl w-full">
             {renderSection()}
           </div>
         </main>

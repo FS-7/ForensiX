@@ -3,10 +3,9 @@ from flask_cors import CORS
 from transformers import pipeline, logging
 
 import torch
-import warnings
+import json
 
 app = Flask(__name__)
-#app.secret_key = os.getenv("SESSION_KEY")
 cors = CORS(app)
 
 torch.cuda.empty_cache()
@@ -39,22 +38,12 @@ def checkStatus():
 @app.route('/', methods=["POST"])
 def ask_gemma():
     try:
-        data = request.form
-        query = data["messages"]
+        print("Gemma")
+        data = json.loads(request.data)
+        messages = data["messages"]
         new_token_size = int(data["new_token_size"])
-        messages = [
-            {
-                "role": "user", 
-                "content": query
-            }
-        ]
-        
-        #print("new_token_size", new_token_size)
-        #print(messages)
         
         outputs = nlp.model(messages, max_new_tokens=new_token_size)
-        
-        print(outputs)
         assistant_response = outputs[0]["generated_text"][-1]["content"].strip()
         return make_response(assistant_response, 200)
         

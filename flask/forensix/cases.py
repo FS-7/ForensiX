@@ -22,7 +22,7 @@ def get_cases():
             keys.append(i[0])
         
         for i in set(keys):
-            for j in cursor.execute("SELECT rowid, case_id, title FROM EVIDENCES;", values).fetchall():    
+            for j in cursor.execute("SELECT rowid, case_id, type FROM EVIDENCES;", values).fetchall():    
                 if i == j[1]:
                     evidences[i].append((j[0], j[2]))
         
@@ -128,23 +128,23 @@ def post_evidence():
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     data = request.form
     case_number = data['caseNumber']
-    title = data['title']
+    type = data['type']
     filename = ""
-    
+
     try:
         for i in request.files:
             file = request.files[i]
-            filename = secure_filename(f"{case_number}_{title}_{file.filename}")
+            filename = secure_filename(f"{case_number}_{file.filename}")
             file.save(os.path.join(UPLOAD_FOLDER, filename))
     except Exception as e:
         print(e)
     except:
         print("Error")
-    
+        
     try:
-        sql = "INSERT INTO EVIDENCES(CASE_ID, TITLE, REFERENCE) VALUES (?, ?, ?);"
-        values = [case_number, title, filename]
-        conn = get_conn("Forensix.db")
+        sql = "INSERT INTO EVIDENCES(CASE_ID, TYPE, REFERENCE) VALUES (?, ?, ?);"
+        values = [case_number, type, filename]
+        conn = get_conn(f"{DB_LOCATION}/Forensix.db")
         cursor = conn.cursor()
         cursor.execute(sql, values)
         last_id = str(cursor.lastrowid)

@@ -1,10 +1,9 @@
 import { useParams, Link } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar, MapPin, User, AlertCircle, FileText, Shield } from "lucide-react";
-import { CaseNLPChat } from "@/components/CaseNLPChat";
 import { useEffect, useState } from "react";
 import { AddEvidence } from "@/components/AddEvidence";
 
@@ -36,7 +35,7 @@ const CaseDetail = () => {
 		[]
 	)
 	const case_ = cases.find((c) => c.id === id);
-	console.log(case_)
+	//console.log(case_)
 
 	if (!case_) {
 		return (
@@ -103,9 +102,7 @@ const CaseDetail = () => {
 				</div>
 
 				<div className="grid lg:grid-cols-3 gap-6">
-					{/* Main Content */}
 					<div className="lg:col-span-2 space-y-6">
-						<CaseNLPChat caseData={case_} />
 						<Card className="p-6">
 							<h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
 								<FileText className="h-5 w-5 text-primary" />
@@ -114,43 +111,6 @@ const CaseDetail = () => {
 							<p className="text-foreground leading-relaxed">{case_.description}</p>
 						</Card>
 
-						{case_.notes && (
-							<Card className="p-6">
-								<h2 className="text-xl font-semibold mb-4">Notes</h2>
-								<p className="text-muted-foreground">{case_.notes}</p>
-							</Card>
-						)}
-
-						{case_.evidences && case_.evidences.length > 0 && (
-							<Card className="p-6">
-								<h2 className="text-xl font-semibold mb-4 flex items-center gap2">
-									<Shield />
-									Evidences
-								</h2>
-								<ul className="space-y-2">
-									{
-										case_.evidences.map(evidence => (
-											<li key={evidence[0]}>
-												<div className="flex justify-between py-1">
-													<p className="text-foreground">{evidence[1]}</p>
-													<Link to={`/report/${evidence[0]}`} >
-														<Button size="sm" variant="secondary">
-															View Report
-														</Button>
-													</Link>
-
-												</div>
-											</li>
-										))
-									}
-								</ul>
-							</Card>
-						)}
-					</div>
-
-					{/* Sidebar */}
-					<div className="space-y-6">
-						<AddEvidence case_={case_} />
 						<Card className="p-6">
 							<h2 className="text-xl font-semibold mb-4">Case Details</h2>
 							<div className="space-y-4">
@@ -219,6 +179,42 @@ const CaseDetail = () => {
 								)}
 							</div>
 						</Card>
+
+						{case_.notes && (
+							<Card className="p-6">
+								<h2 className="text-xl font-semibold mb-4">Notes</h2>
+								<p className="text-muted-foreground">{case_.notes}</p>
+							</Card>
+						)}
+					</div>
+
+					<div className="space-y-6">
+						<AddEvidence case_={case_} />
+						{case_.evidences && case_.evidences.length > 0 && (
+							<Card className="p-6">
+								<h2 className="text-xl font-semibold mb-4 flex items-center gap2">
+									<Shield />
+									Evidences
+								</h2>
+								<ul className="space-y-2">
+									{
+										case_.evidences.map(evidence => (
+											<li key={evidence[0]}>
+												<div className="flex justify-between py-1">
+													<p className="text-foreground">{evidence[1]}</p>
+													<Link to={`/report/${evidence[0]}`} >
+														<Button size="sm" variant="secondary">
+															View Report
+														</Button>
+													</Link>
+
+												</div>
+											</li>
+										))
+									}
+								</ul>
+							</Card>
+						)}
 					</div>
 				</div>
 			</main>

@@ -2,6 +2,8 @@ from forensix.shared import *
 from forensix.parser import parseContactsCSV, parseSMS_SQL, parseLogsSQL, scan_files
 import zipfile
 
+content = []
+
 def init(id):
     print("Initializing Evidence Database")
     os.makedirs(EXT_DB_LOCATION, exist_ok=True)
@@ -143,6 +145,7 @@ def extraction(last_id, filename, case_id):
     extract(filename, last_id)
     add_to_database(last_id)
     analyze(last_id, case_id)
+    send_data_to_nlp(case_id, last_id)
     print("Data Extracted and inserted into database")
 
 def analyze(id, case_id):
@@ -151,9 +154,9 @@ def analyze(id, case_id):
         "Messages": analyze_text_messages(id),
         "Contacts": analyze_contacts(id),
         "Call_logs": analyze_call_logs(id),
-        "Files": analyze_files(id),
-        "Images": analyze_images(id, case_id),
-        "Audios": analyze_audios(id)
+        "Files": None,#analyze_files(id),
+        "Images": None,#analyze_images(id, case_id),
+        "Audios": None,#analyze_audios(id)
     }
     try:
         client["Evidence_report"].insert_one(document)
@@ -189,10 +192,10 @@ def analyze_text_messages(id):
             for i in k["Messages"]:
                 msg += ("Sender: " if i["Type"] == "Sent" else "Receiver: ") + i["Content"] + " "
                 
-            messages = f"""
-                    Text: {msg}.
-                    Query: In one word classify the text into one of the following categories: {', '.join(candidate_labels)}. No explaination.
-                """
+            messages = [{
+                "role":"user", "content": f"""Text: {msg}. Query: In one word classify the text into one of the following categories: {', '.join(candidate_labels)}. No explaination."""
+            }]
+            
             k["Tags"].append(ask_gemma(messages, 64))
             
         print("Done")
@@ -311,6 +314,36 @@ def analyze_audios(id):
         print(e)
     return 
     
+def send_data_to_nlp(case_id, id):
+    try:
+        conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
+        cur = conn.cursor()
+        messages = cur.execute("SELECT * FROM MESSAGES;").fetchall()
+        logs = cur.execute("SELECT * FROM CALL_LOGS;").fetchall()
+        contacts = cur.execute("SELECT * FROM CONTACTS;").fetchall()
+        files = cur.execute("SELECT * FROM FILES;").fetchall()
+        
+        for sms in messages:
+            content.append(f"Case ID {case_id}, Evidence Number {id}: Message {'to' if sms[4] == 'Sent' else 'from'} {sms[0]} ({sms[4]}) on {sms[3]}: {sms[1]}".lower()) 
+        
+        for log in logs:
+            content.append(f"Case: {case_id}, Evidence: {id}: Call log {log[3]} call, {log[0]} on {log[1]} lasting {log[2]}.".lower())
+        
+        for contact in contacts:
+            content.append(f"Case: {case_id}, Evidence: {id}: Contact: {contact[0]}. Phone number: {contact[1]}{"" if contact[3] == "No Email" else f", Email: {contact[3]}."}.".lower(),
+        )
+            
+        for file in files:
+            content.append(f"")
+        
+        print('\n'.join(content))
+    
+    except Exception as e:
+        print(e)
+    except:
+        print("Error")
+    
+
 def generate_query(query):
     try:
         messages = f"""

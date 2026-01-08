@@ -9,7 +9,7 @@ from pymongo import MongoClient
 from collections import defaultdict
 from dotenv import load_dotenv, get_key
 
-import os, hashlib, random, requests, uuid
+import os, hashlib, random, requests, uuid, json, asyncio
 
 BASEDIR = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(BASEDIR, '.env'))
@@ -74,7 +74,7 @@ def init_db():
             '''
             CREATE TABLE IF NOT EXISTS EVIDENCES(
                 CASE_ID VARCHAR(32) NOT NULL REFERENCES CRIME_CASES(CASE_ID),
-                TITLE VARCHAR(50) NOT NULL UNIQUE,
+                TYPE VARCHAR(10) NOT NULL,
                 REFERENCE VARCHAR(512) NOT NULL
             );
             '''    
@@ -106,9 +106,9 @@ def ask_gemma(messages, size):
     
     headers = {'User-Agent': 'Mozilla/5.0'}
     payload = {'messages': messages, 'new_token_size': size}
-    
+
     session = requests.Session()
-    res = session.post(f"{NLP_URL}/", headers=headers, data=payload)
+    res = session.post(f"{NLP_URL}/", headers=headers, data=json.dumps(payload))
     
     if res.status_code == 200:
         return res.text
