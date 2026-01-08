@@ -2,3 +2,5 @@ __pycache__
 .env
 files
 test.ipynb
+
+flask_rag
