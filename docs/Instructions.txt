@@ -1,0 +1,46 @@
+cd /storage/emulated/0/
+mkdir data
+
+#   Push Synthetic SMS
+adb shell "content insert --uri content://sms --bind address:s:<NUMBER_WITH_COUNTRY_CODE> --bind date:l:<DATE_TIME> --bind body:s:<BODY> --bind type:i:<TYPE>"
+1: INBOX, 2: SENT.
+
+#   Push Synthetic CALL LOG
+adb shell "content insert --uri content://call_log/calls --bind number:s:<NUMBER_WITH_COUNTRY_CODE> --bind date:l:<DATE_TIME> --bind duration:i:<SECONDS_OF_CALL_RECORDING> --bind type:i:<TYPE>"
+1: INCOMING, 2: OUTGOING, 3: MISSED.
+
+#   Push Synthetic DATA
+adb push <FILENAME> <LOCATION>/<FILENAME>
+
+#   Pull messages from device
+adb shell "content query --uri content://sms > data/sms.csv" 
+adb pull /data/data/com.android.providers.telephony/databases/mmssms.db sms.db || False
+
+#   Pull Call Logs from device
+adb shell "content query --uri content://call_log/calls > data/logs.csv"
+adb pull "/data/data/com.android.providers.contacts/databases/calllog.db" call_log.db
+
+#   Pull Contacts list from devices
+adb shell "content query --uri content://contacts/phones/ > data/contacts.csv"
+adb pull "/data/data/com.android.providers.contacts/databases/contacts2.db" data/contacts2.db
+
+#   Pull Call Recordings from device
+adb pull "/storage/CallRecordings" "data/CallRecordings" || true
+
+#   Pull Images and Videos from devices
+adb pull "/storage/DCIM" "data/DCIM"
+
+#   Pull Images and Videos from devices
+adb pull "/storage/emulated/0" "output"
+
+#   Pull Emails from devices
+
+
+#   Pull Location Data 
+adb pull "/data/data/com.google.android.apps.maps/databases/gmm_storage.db" > <FILENAME>
+
+#   Convert Stereo sound to Mono
+ffmpeg -i <FILENAME>.m4a -ac 1 <FILENAME>_mono.m4a
+
+#   Device Info
+adb shell getprop
