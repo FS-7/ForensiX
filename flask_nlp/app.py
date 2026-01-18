@@ -4,6 +4,7 @@ from transformers import pipeline, logging
 
 import torch
 import json
+import os
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -38,7 +39,6 @@ def checkStatus():
 @app.route('/', methods=["POST"])
 def ask_gemma():
     try:
-        print("Gemma")
         data = json.loads(request.data)
         messages = data["messages"]
         new_token_size = int(data["new_token_size"])

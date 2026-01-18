@@ -29,7 +29,7 @@ def get_cases():
         for id, i in enumerate(cursor.execute(sql, values).fetchall()):
             results.append(
                 {
-                    "id": str(id), "caseNumber": i[0], "title": i[1], "description": i[2], "type": i[3], "status": i[4], "severity": i[5], "location": i[6], "dateOccured": i[7], "dateReported": i[8], "assignedOfficer": i[9], "witnesses": i[10], "evidences": evidences[i[0]], "notes": i[11]
+                    "id": str(id), "caseNumber": i[0], "title": i[1], "description": i[2], "type": i[3], "status": i[4], "severity": i[5], "location": i[6], "dateOccured": (int(i[7]) * 1000), "dateReported": (int(i[8]) * 1000), "assignedOfficer": i[9], "witnesses": i[10], "evidences": evidences[i[0]], "notes": i[11]
                 }
             )
         print("Request completed")
@@ -59,6 +59,7 @@ def post_cases():
         conn.close()
         
     data = request.form
+    print(data)
     
     title = data['title']
     description = data['description']
@@ -67,12 +68,12 @@ def post_cases():
     severity = data['severity']
     location = data['location']
     dateOccurred = data['dateOccurred']
-    dateReported = datetime.now()
+    dateReported = datetime.now().timestamp()
     assignedOfficer = data['assignedOfficer']
     witnesses = data['witnesses']
     notes = ""
     
-    dateOccurred = datetime(dateOccurred).isoformat()
+    dateOccurred = int(dateOccurred) // 1000
     sql = "INSERT INTO CRIME_CASES(CASE_ID, TITLE, DESCRIPTION, TYPE, STATUS, SEVERITY, LOCATION, DATE_OCCURED, DATE_REPORTED, ASSIGNED_OFFICER, WITNESSES, NOTES) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
     
     inserted = False
@@ -85,6 +86,23 @@ def post_cases():
             temp(sql, values)
             inserted = True
             print("Case Added Successfully")
+            
+            documents.insert_one({
+                "page_content": f"Case ID {case_id}, titled “{title},” is a {type} case currently marked as {status} with a {severity} severity level. The incident occurred at {location} on {dateOccurred} and was officially reported on {dateReported}. The case description states that {description}. The matter has been assigned to {assignedOfficer}, and the following witnesses were identified in relation to the incident: {witnesses}.".lower(), 
+                "metadata": {
+                    "Case ID": case_id,
+                    "Title": title,
+                    "Description": description,
+                    "Type": type,
+                    "Status": status,
+                    "Severity": severity,
+                    "Location": location,
+                    "Date_Occurred": datetime.fromtimestamp(int(dateOccurred) // 1000).isoformat(),
+                    "Date_Reported": datetime.fromtimestamp(int(dateReported) // 1000).isoformat(),
+                    "Assigned_Officer": assignedOfficer,
+                    "Witnesses": witnesses                    
+                }
+            })
             
             return make_response("", 200)
         
@@ -156,6 +174,7 @@ def post_evidence():
         extraction(last_id, filename, case_number)
         
         return make_response("", 200)
+        
     except sqlite3.IntegrityError as e:
         return make_response("Integrity Error", 400)
     except Exception as e:
@@ -164,7 +183,6 @@ def post_evidence():
         print("Error")
     
     return make_response("", 400)
-
 
 @cases.route('/evidence', methods=["DELETE"])
 def delete_evidence():

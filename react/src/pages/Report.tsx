@@ -5,7 +5,7 @@ import { CallLogs } from "@/components/sections/CallLogs";
 import { Messages } from "@/components/sections/Messages";
 import { Contacts } from "@/components/sections/Contacts";
 import { Files } from "@/components/sections/Files";
-import { Photos } from "@/components/sections/Photos";
+//import { Photos } from "@/components/sections/Photos";
 import { Navigation } from "@/components/Navigation";
 import { useParams } from "react-router-dom";
 import NotFound from "./NotFound";
@@ -51,8 +51,6 @@ const Report = () => {
         return <Contacts report={report} />;
       case 'files':
         return <Files report={report} />;
-      case 'photos':
-        return <Photos report={report} />;
       default:
         return <DeviceOverview report={report} />;
     }
@@ -65,10 +63,10 @@ const Report = () => {
   return (
     <div className="min-h-screen bg-background h-full">
       <Navigation />
-      <div className="flex flex-row justify-center h-full">
+      <div className="flex flex-row justify-center h-full w-full">
         <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
-        <main className="p-8">
-          <div className="max-w-6xl w-full">
+        <main className="p-8 w-full h-full">
+          <div className="max-w-6xl min-w-5xl h-full w-full">
             {renderSection()}
           </div>
         </main>

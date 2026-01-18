@@ -109,10 +109,10 @@ export function Files({ report }) {
                           key={i}
                           className="px-4 py-3 hover:bg-secondary/30 transition-colors"
                         >
-                          {file.Content && (
+                          {file.CONTENT && (
                               <div className="mt-2 p-3 bg-secondary/50 rounded-md border border-border">
                                 <p className="text-xs text-muted-foreground mb-1">Content Preview:</p>
-                                <p className="text-foreground whitespace-pre-wrap">{file.Content}</p>
+                                <p className="text-foreground whitespace-pre-wrap">{file.CONTENT}</p>
                               </div>
                             )}
                           <div className="flex items-center gap-3 mb-2">

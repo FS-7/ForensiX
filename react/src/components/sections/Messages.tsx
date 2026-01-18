@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { FilterBar } from "@/components/FilterBar";
 import { cn } from "@/lib/utils";
-import { MessageCircle, Send, User } from "lucide-react";
+import { AlertTriangle, MessageCircle, Send, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
@@ -22,7 +22,7 @@ export interface TextMessage {
   Tags: [];
 }
 
-export function Messages({report}) {
+export function Messages({ report }) {
   //let textMessages = report[0]["Messages"]
 
   const [textMessages, setTextMessages] = useState(report[0]["Messages"] || [])
@@ -33,7 +33,7 @@ export function Messages({report}) {
     const date = new Date(dateString);
     const now = new Date();
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     if (diffDays === 1) return 'Yesterday';
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -41,18 +41,18 @@ export function Messages({report}) {
 
   const filteredMessages = useMemo(() => {
     return textMessages.filter((msg) => {
-      const matchesSearch = 
+      const matchesSearch =
         (msg.Name && msg.Name.toLowerCase().includes(search.toLowerCase())) ||
         msg.Messages.filter((con) => { return con.Content.toLowerCase().includes(search.toLowerCase()) }) ||
         msg.Number.includes(search);
-      
+
       const matchesType = typeFilter === "all" || typeFilter === msg.Messages.Content.Type.toLowerCase();
-      
+
       return matchesSearch && matchesType;
-    }); 
+    });
   }, [search, typeFilter]);
 
-  const hasActiveFilters = search !== "" || typeFilter !== "all" ;
+  const hasActiveFilters = search !== "" || typeFilter !== "all";
 
   return (
     <div className="space-y-6">
@@ -102,9 +102,20 @@ export function Messages({report}) {
                       <p className="text-sm font-mono text-muted-foreground">{message.Number}</p>
                     </div>
                     <div className="flex items-center gap-2 mr-4">
+                      {message.Tags[0] != "Normal"? 
+                      <Badge variant="destructive" className="flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        <p className={cn(
+                          "text-sm font-medium mb-1",
+                          "text-threat"
+                        )}>
+                          {message.Tags[0]}
+                        </p>
+                      </Badge>:
                       <Badge variant="secondary">
-                        {message.Messages.length} message{message.Messages.length !== 1 ? 's' : ''}
+                        {message.Tags[0]}
                       </Badge>
+                      }
                     </div>
                   </div>
                 </AccordionTrigger>
@@ -126,7 +137,7 @@ export function Messages({report}) {
                               <MessageCircle className="w-3 h-3 text-muted-foreground" />
                             )}
                             <span className="text-xs text-muted-foreground capitalize">{msg.Type}</span>
-                            
+
                           </div>
                           <span className="text-xs text-muted-foreground">
                             <p>Date Sent:</p>{formatDate(msg.DateSent)}

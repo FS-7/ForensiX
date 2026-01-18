@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { photos, faceGroups } from "@/data/mockData";
 import { FilterBar } from "@/components/FilterBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +20,9 @@ export interface FaceGroup {
   name: string;
   photoCount: number;
 }
+
+const photos: Photo[] = [];
+const faceGroups: FaceGroup[] = [];
 
 export function Photos({report}) {
   const [searchTerm, setSearchTerm] = useState("");

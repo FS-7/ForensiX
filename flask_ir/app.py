@@ -16,6 +16,7 @@ app = Flask(__name__)
 cors = CORS(app)
 
 client = MongoClient(host="localhost", port=27017)["Forensix"]["Face_data"]
+val = MongoClient(host="localhost", port=27017)["Forensix"]["i"]
 image_AI = None
 
 class ImageAI:
@@ -51,61 +52,44 @@ def Image_AI():
         evidence = data["evidence"]
         case_id = data["case_id"]
         
-        face_recognition(image, evidence, case_id)
+        #face_recognition(image, evidence, case_id)
         
         image_AI = ImageAI()
         raw_image = Image.open(image).convert('RGB')
-        return make_response(image_AI.run(raw_image), 200)
+        output = image_AI.run(raw_image)
+        return make_response(output, 200)
 
     except Exception as e:
         return make_response("Error", 400)
     
 def face_recognition(image, evidence, case_id):
+    i = val.find({}, {"_id": 0})[0]["i"]
     try:    
         doc = []
+        enc_known = client.find({}, {"_id": 0}).to_list()
+        
         img = fr.load_image_file(image)
         for loc in fr.face_locations(img):
-            doc.append({ "encodings": fr.face_encodings(img, [loc])[0].tolist(), "location": loc, "file": image, "evidence": evidence, "case_id": case_id, "name": "", "group": "", "tags": [] })
-        
+            for encoding in fr.face_encodings(img, [loc]):
+                    
+                res = None
+                for enc in enc_known:
+                    out = fr.compare_faces([enc["encodings"]], encoding, tolerance=0.57)
+                    print(out)
+                    if out == np.True_:
+                        print(enc["group"])
+                        res = enc["group"]
+                        
+                if res == None:
+                    doc.append({ "encodings": encoding.tolist(), "location": loc, "file": image, "evidence": evidence, "case_id": case_id, "name": "", "group": f"group_{i}", "tags": [] })
+                    i = i + 1
+                else:
+                    doc.append({ "encodings": encoding.tolist(), "location": loc, "file": image, "evidence": evidence, "case_id": case_id, "name": "", "group": res, "tags": [] })
+                                 
+        print(doc)
+        val.update_one({}, {'$set': {"i": i}})
         client.insert_many(doc)
         return True
     
     except Exception as e:
         return False
-
-@app.route('/similarity', methods=["POST"])
-def similarity():
-    if len(request.form) < 1:
-        return make_response("No data received", 400)
-    
-    data = request.form
-    image = data["image"]
-    enc_known = client.find({}, {"_id": 0}).to_list()
-    #enc_unknown = []
-    
-    try:
-        img = fr.load_image_file(image)
-        for loc in fr.face_locations(img):
-            for encoding in fr.face_encodings(img, [loc]):
-                for enc in enc_known:
-                    out = fr.compare_faces([enc["encodings"]], encoding, tolerance=0.5)
-                    if out == np.True_:                    
-                        outline = (255, 0, 0)
-                        pil_img = Image.open(image)
-                        pil_draw = ImageDraw.Draw(pil_img)
-                        pil_img_db = Image.open(enc["file"])
-                        pil_draw_db = ImageDraw.Draw(pil_img_db)
-                        pil_draw.rectangle((loc[3], loc[0], loc[1], loc[2]), outline=outline)
-                        pil_draw_db.rectangle((enc["location"][3], enc["location"][0], enc["location"][1], enc["location"][2]), outline=outline)
-                        pil_img.show()
-                        pil_img_db.show()
-                        pil_img = None
-                        pil_draw = None
-                        pil_img_db = None
-                        pil_draw_db = None
-                        time.sleep(10)
-                    
-        return make_response("res", 200)
-    except Exception as e:
-        print(e)
-    return make_response("Error", 200)

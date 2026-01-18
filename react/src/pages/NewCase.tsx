@@ -60,7 +60,7 @@ const NewCase = () => {
         type: formData["type"],
         severity: formData["severity"],
         location: formData["location"],
-        dateOccurred: formData["dateOccurred"],
+        dateOccurred: new Date(formData["dateOccurred"]).getTime().toString(),
         assignedOfficer: formData["assignedOfficer"],
         witnesses: formData["witnesses"],
       }),
@@ -87,6 +87,8 @@ const NewCase = () => {
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  console.log(new Date(formData.dateOccurred).getTime())
 
   return (
     <div className="min-h-screen bg-background">

@@ -2,8 +2,6 @@ from forensix.shared import *
 from forensix.parser import parseContactsCSV, parseSMS_SQL, parseLogsSQL, scan_files
 import zipfile
 
-content = []
-
 def init(id):
     print("Initializing Evidence Database")
     os.makedirs(EXT_DB_LOCATION, exist_ok=True)
@@ -145,25 +143,25 @@ def extraction(last_id, filename, case_id):
     extract(filename, last_id)
     add_to_database(last_id)
     analyze(last_id, case_id)
-    send_data_to_nlp(case_id, last_id)
     print("Data Extracted and inserted into database")
 
 def analyze(id, case_id):
+    images = analyze_images(case_id, id)
+    files = analyze_text(case_id, id) + analyze_pdf(case_id, id) + analyze_audios(case_id, id) + images
     document = {
         "Case_id": case_id, "Evidence": id, 
-        "Messages": analyze_text_messages(id),
-        "Contacts": analyze_contacts(id),
-        "Call_logs": analyze_call_logs(id),
-        "Files": None,#analyze_files(id),
-        "Images": None,#analyze_images(id, case_id),
-        "Audios": None,#analyze_audios(id)
+        "Messages": analyze_text_messages(case_id, id),
+        "Contacts": analyze_contacts(case_id, id),
+        "Call_logs": analyze_call_logs(case_id, id),
+        "Files": files,    
+        "Images": images,
     }
     try:
-        client["Evidence_report"].insert_one(document)
+        report.insert_one(document)
     except Exception as e:
         print(e)
         
-def analyze_text_messages(id):
+def analyze_text_messages(case_id, id):
     print("Analyzing Text messages")
     
     try:
@@ -174,6 +172,20 @@ def analyze_text_messages(id):
                 SELECT * FROM MESSAGES;
             '''
         ).fetchall()
+        
+        for r in results:
+            documents.insert_one({
+                "page_content": f"Case ID: {case_id}, Evidence Number: {id}; Message {'to' if r[4] == 'Sent' else 'from'} {r[0]} {r[4]} on {datetime.fromtimestamp(int(r[3]) // 1000).isoformat()}: {r[1]}.".lower(), 
+                "metadata": {
+                    "Case ID": case_id,
+                    "Evidence": id,
+                    "Number": r[0],
+                    "Message": r[1],
+                    "Datetime Sent": r[2],
+                    "Datetime Received": r[3],
+                    "Type": r[4],
+                }
+            })
         
         candidate_labels = [
             "Normal", "Threat", "Identity Attack", "Sexually Explicit", "Extremism", "Scam"
@@ -195,8 +207,9 @@ def analyze_text_messages(id):
             messages = [{
                 "role":"user", "content": f"""Text: {msg}. Query: In one word classify the text into one of the following categories: {', '.join(candidate_labels)}. No explaination."""
             }]
-            
-            k["Tags"].append(ask_gemma(messages, 64))
+        
+            k["Tags"].append(ask_gemma(messages, 10))
+        
             
         print("Done")
         return output
@@ -205,7 +218,7 @@ def analyze_text_messages(id):
         print(e)
     return 
     
-def analyze_contacts(id):
+def analyze_contacts(case_id, id):
     print("Analyzing Contacts")
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
@@ -215,6 +228,19 @@ def analyze_contacts(id):
                 SELECT * FROM CONTACTS;
             '''
         ).fetchall()
+        
+        for r in results:
+            documents.insert_one({
+                "page_content": f"Case ID: {case_id}, Evidence Number: {id}; Contact: {r[0]}, Phone number: {r[1]}, Email: {r[3]}.".lower(),
+                "metadata": {
+                    "Case ID": case_id,
+                    "Evidence": id,
+                    "Name": r[0],
+                    "Number": r[1],
+                    "Group": r[2],
+                    "Email": r[3],
+                }
+            })
         
         output = [] 
         for i in set(r[2] for r in results):
@@ -230,7 +256,7 @@ def analyze_contacts(id):
         print(e)
     return 
 
-def analyze_call_logs(id):
+def analyze_call_logs(case_id, id):
     print("Analyzing Call Logs")
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
@@ -240,6 +266,19 @@ def analyze_call_logs(id):
                 SELECT * FROM CALL_LOGS;
             '''
         ).fetchall()
+        
+        for r in results:
+            documents.insert_one({
+                "page_content": f"Case ID: {case_id}, Evidence Number: {id}; Call log: {r[3]} call, {r[0]} on {datetime.fromtimestamp(int(r[1]) // 1000).isoformat()} lasting {r[2]} seconds.".lower(),
+                "metadata": {
+                    "Case ID": case_id,
+                    "Evidence": id,
+                    "Number": r[0],
+                    "Date": r[1],
+                    "Duration": r[2],
+                    "Type": r[3],
+                }
+            })
         
         output = []
         for i in set(r[0] for r in results):
@@ -255,15 +294,35 @@ def analyze_call_logs(id):
         print(e)
     return 
 
-def analyze_files(id):
+def analyze_pdf(case_id, id):
     try: 
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
         cur = conn.cursor()
-        results = cur.execute("SELECT * FROM FILES;").fetchall()
+        results = cur.execute("SELECT * FROM FILES WHERE EXT='.pdf';").fetchall()
         
         output = []
         for i in results:
-            output.append({"Path": i[0], "Name": i[1], "Directory": i[2], "Size": i[3], "C_TIME": i[4], "M_TIME": i[5], "EXT": i[6], "Summary": ""})
+            content = ""
+            reader = PdfReader(f"..\\files\\files\\{id}\\storage\\0{i[0]}")
+            for page in reader.pages:
+                content += page.extract_text()
+            
+            output.append({"Path": i[0], "Name": i[1], "Directory": i[2], "Size": i[3], "C_TIME": i[4], "M_TIME": i[5], "EXT": i[6], "CONTENT": content})
+            documents.insert_one({
+                "page_content": f"Case ID: {case_id}, Evidence Number: {id}; File, Type: PDF, Path: {i[0]}, Size: {i[3]}, Creation Time: {datetime(int(i[4]) // 1000).isoformat(sep=" ")}, Modified Time: {datetime(int(i[5]) // 1000).isoformat(sep=" ")} Content: {content}",
+                "metadata": {   
+                    "Case ID": case_id,
+                    "Evidence": id,
+                    "Path": i[0], 
+                    "Name": i[1], 
+                    "Directory": i[2], 
+                    "Size": i[3],
+                    "C_TIME": i[4], 
+                    "M_TIME": i[5], 
+                    "EXT": i[6]
+                }
+            })
+        
         return output
 
     except Exception as e:
@@ -272,18 +331,68 @@ def analyze_files(id):
         print("Error") 
     return
 
-def analyze_images(id, case_id):
+def analyze_text(case_id, id):
+    try: 
+        conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
+        cur = conn.cursor()
+        results = cur.execute("SELECT * FROM FILES WHERE EXT='.txt';").fetchall()
+        
+        output = []
+        for i in results:
+            content = ""
+            with open(f"..\\files\\files\\{id}\\storage\\0{i[0]}", 'r') as file:
+                content = file.read()
+            output.append({"Path": i[0], "Name": i[1], "Directory": i[2], "Size": i[3], "C_TIME": i[4], "M_TIME": i[5], "EXT": i[6], "CONTENT": content})
+            documents.insert_one({
+                "page_content": f"Case ID: {case_id}, Evidence Number: {id}; File, Type: Text, Path: {i[0]}, Size: {i[3]}, Creation Time: {datetime.fromtimestamp(int([4]) // 1000).isoformat(sep=" ")}, Modified Time: {datetime.fromtimestamp(int(i[5]) // 1000).isoformat(sep=" ")} Content: {content}",
+                "metadata": {   
+                    "Case ID": case_id,
+                    "Evidence": id,
+                    "Path": i[0], 
+                    "Name": i[1], 
+                    "Directory": i[2], 
+                    "Size": i[3],
+                    "C_TIME": i[4], 
+                    "M_TIME": i[5], 
+                    "EXT": i[6]
+                }
+            })
+            
+        return output
+
+    except Exception as e:
+        print(e)
+    except:
+        print("Error") 
+    return
+
+def analyze_images(case_id, id):
     print("Analyzing Images")
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
         cur = conn.cursor()
         
         output = []
-        results = cur.execute('SELECT PATH FROM FILES WHERE EXT IN (".jpg", ".jpeg", ".png");').fetchall()
+        results = cur.execute('SELECT * FROM FILES WHERE EXT IN (".jpg", ".jpeg", ".png");').fetchall()
         for res in results:
-            output.append((res[0], ask_fr_get_enc(res[0], id, case_id)))
-            
-        #similarities = ask_fr_compare_list(, encodings[1])
+            content = ask_ir(f"..\\files\\files\\{id}\\storage\\0{res[0]}", id, case_id).decode('utf-8')
+            print(content)
+            output.append({"Path": res[0], "Name": res[1], "Directory": res[2], "Size": res[3], "C_TIME": res[4], "M_TIME": res[5], "EXT": res[6], "CONTENT": content})
+            documents.insert_one({
+                "page_content": f"Case ID: {case_id}, Evidence Number: {id}; File, Type: Image, Path: {res[0]}, Size: {res[3]}, Creation Time: {datetime.fromtimestamp(int(res[4]) // 1000).isoformat(sep=" ")}, Modified Time: {datetime.fromtimestamp(int(res[5]) // 1000).isoformat(sep=" ")} Content: {content}",
+                "metadata": {   
+                    "Case ID": case_id,
+                    "Evidence": id,
+                    "Path": res[0], 
+                    "Name": res[1], 
+                    "Directory": res[2], 
+                    "Size": res[3],
+                    "C_TIME": res[4], 
+                    "M_TIME": res[5], 
+                    "EXT": res[6]
+                }
+            }) 
+        
         print("Analyzed Images")
         return output
        
@@ -291,102 +400,41 @@ def analyze_images(id, case_id):
         print(e)
     return
  
-def analyze_audios(id):
+def analyze_audios(case_id, id):
     print("Analyzing Audio files")
-    
     try:
         conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
         cur = conn.cursor()
         audios = cur.execute(
             '''
-                SELECT path FROM FILES WHERE EXT='mp3' or EXT='m4a' or EXT='obb' or EXT='mpeg';
+                SELECT * FROM FILES WHERE EXT IN ('.mp3', '.m4a', '.obb', '.mpeg', '.mp4');
             '''
         ).fetchall()
-        print(audios)
-        results = defaultdict(list)
-        for audio_path in audios:
-            results[audio_path] = ask_whisperx(audio_path)
         
+        output = []
+        for res in audios:
+            content = ask_whisperx(f"..\\files\\files\\{id}\\storage\\0{res[0]}")
+            output.append({"Path": res[0], "Name": res[1], "Directory": res[2], "Size": res[3], "C_TIME": res[4], "M_TIME": res[5], "EXT": res[6], "CONTENT": content})
+            documents.insert_one({
+                "page_content": f"Case ID: {case_id}, Evidence Number: {id}; File, Type: Audio, Path: {res[0]}, Size: {res[3]}, Creation Time: {datetime.fromtimestamp(int(res[4]) // 1000).isoformat(sep=" ")}, Modified Time: {datetime.fromtimestamp(int(res[5]) // 1000).isoformat(sep=" ")} Content: {content}",
+                "metadata": {   
+                    "Case ID": case_id,
+                    "Evidence": id,
+                    "Path": res[0], 
+                    "Name": res[1], 
+                    "Directory": res[2], 
+                    "Size": res[3],
+                    "C_TIME": res[4], 
+                    "M_TIME": res[5], 
+                    "EXT": res[6]
+                }
+            })
         print("Analyzed Audio files")
-        return results
-    
-    except Exception as e:
-        print(e)
-    return 
-    
-def send_data_to_nlp(case_id, id):
-    try:
-        conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
-        cur = conn.cursor()
-        messages = cur.execute("SELECT * FROM MESSAGES;").fetchall()
-        logs = cur.execute("SELECT * FROM CALL_LOGS;").fetchall()
-        contacts = cur.execute("SELECT * FROM CONTACTS;").fetchall()
-        files = cur.execute("SELECT * FROM FILES;").fetchall()
-        
-        for sms in messages:
-            content.append(f"Case ID {case_id}, Evidence Number {id}: Message {'to' if sms[4] == 'Sent' else 'from'} {sms[0]} ({sms[4]}) on {sms[3]}: {sms[1]}".lower()) 
-        
-        for log in logs:
-            content.append(f"Case: {case_id}, Evidence: {id}: Call log {log[3]} call, {log[0]} on {log[1]} lasting {log[2]}.".lower())
-        
-        for contact in contacts:
-            content.append(f"Case: {case_id}, Evidence: {id}: Contact: {contact[0]}. Phone number: {contact[1]}{"" if contact[3] == "No Email" else f", Email: {contact[3]}."}.".lower(),
-        )
-            
-        for file in files:
-            content.append(f"")
-        
-        print('\n'.join(content))
-    
+        return output
     except Exception as e:
         print(e)
     except:
         print("Error")
-    
+    return
 
-def generate_query(query):
-    try:
-        messages = f"""
-Context: You are a SQL generator. 
-Given the following database schema:
-Table: Messages
-Columns: id (integer) - Address (text) - Date Sent (date) - Date Received (date) - Type (text) - Body (text)
-Table: Contacts
-Columns: id (integer) - name (text) - number (number) - email (text)
-Table: Call Logs
-Columns: id (integer) - Owner (text) - Date Time (number) - Duration (number) - Type (text)
-Table: Files
-Columns: - path (text) - name (text) - parent (text) - size (number) - datetime (datetime) - ext (text) alias type
-Convert the following user question into a correct, safe SQL query. 
-Return only SQL, no explanations.
-Query: {query}
-        """
-        return ask_gemma(messages, 128)
-    
-    except Exception as e:
-        print(e)
-        
-    return 
-
-def run_query(query, id):
-    query = query[6:-3]
-    if str(query).lower().startswith("select"):
-        return
-    conn = sqlite3.connect(f"{EXT_DB_LOCATION}/{id}.db")
-    cur = conn.cursor()
-    output = cur.execute(
-        query,
-        []
-    ).fetchall()
-    print(output)
-    return output
-    
-def convert_to_nlp(results):
-    messages = f"""
-Structure this data into a table
-Data: {results}
-No Explaination
-    """
-    print(len(results)*len(results[0]))
-    return ask_gemma(messages, 500)
     

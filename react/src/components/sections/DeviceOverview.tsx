@@ -1,4 +1,3 @@
-import { deviceMetadata } from "@/data/mockData";
 import { StatCard } from "@/components/StatCard";
 import {
   Smartphone,
@@ -25,6 +24,28 @@ export interface DeviceMetadata {
   lastSync: string;
   ipAddress: string;
   macAddress: string;
+}
+
+const deviceMetadata: DeviceMetadata = {
+  model: "Samsung S25",
+  manufacturer: "Samsung",
+  os: "Android",
+  osVersion: "14",
+  serialNumber: "FSDJKHKSDJUHV2165",
+  imei: "5652121654654",
+  battery: 100,
+  lastSync: "18 Jan 2026",
+  ipAddress: "192.168.1.1",
+  macAddress: "2A:5C:44:4D",
+  ram: {
+    used: 100,
+    total: 100,
+  },
+
+  storage: {
+    used: 50,
+    total: 100,
+  },
 }
 
 export function DeviceOverview({ report }) {
