@@ -7,7 +7,7 @@
 2. Running Backend (Flask)
    * cd web/flask   
    * Create a .env file
-     * SESSION_KEY = "5c69b50571378eb1abc5443160fcd87800cd1b0c2e482606e1735cea2d2b5f3c"
+     * SESSION_KEY = "Secret Session key"
      * UPLOAD_FOLDER = (uploaded files location)
      * DB_LOCATION = (Main DB location)
      * EXTRACTED_FILES_LOCATION = (Extracted files location)
